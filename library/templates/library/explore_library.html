@@ -4,5 +4,20 @@
 
 {% block content %}
 <h1>Explore Library</h1>
-<p>Welcome to the library! Here you can explore our collection of books.</p>
+<ul>
+    {% for book in books %}
+    <li>
+        {{ book.title }} by {{ book.author }}
+        {% if book in user_library_books %}
+            <span style="color:green;">Already in My Library</span>
+        {% else %}
+            <form method="post" style="display:inline;">
+                {% csrf_token %}
+                <input type="hidden" name="book_id" value="{{ book.id }}">
+                <button type="submit" style="background:none; border:none; color:blue; cursor:pointer;">Add to My Library</button>
+            </form>
+        {% endif %}
+    </li>
+    {% endfor %}
+</ul>
 {% endblock %} 

@@ -4,5 +4,18 @@
 
 {% block content %}
 <h1>My Library</h1>
-<p>This is your personal library page.</p>
+<ul>
+    {% for book in books %}
+    <li>
+        {{ book.title }} by {{ book.author }}
+        <form method="post" style="display:inline;">
+            {% csrf_token %}
+            <input type="hidden" name="book_id" value="{{ book.id }}">
+            <button type="submit" style="background:none; border:none; color:red; cursor:pointer;">Remove</button>
+        </form>
+    </li>
+    {% empty %}
+    <li>No books in your library yet.</li>
+    {% endfor %}
+</ul>
 {% endblock %} 

@@ -139,3 +139,7 @@ try:
         django_heroku.settings(locals())
 except ImportError:
     found = False
+
+LOGOUT_REDIRECT_URL = '/'
+
+LOGIN_REDIRECT_URL = '/'
