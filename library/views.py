@@ -48,8 +48,8 @@ def register(request):
         form = CustomUserCreationForm(request.POST)
         if form.is_valid():
             user = form.save()
-            role = form.cleaned_data.get('role')
-            Profile.objects.create(user=user, role=role)
+            # Set the default role to 'patron'
+            Profile.objects.create(user=user, role='patron')
             login(request, user)
             return redirect('home')
     else:

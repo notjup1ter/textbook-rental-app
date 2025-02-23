@@ -21,7 +21,7 @@ from library import views  # Import the views from the library app
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('library/', include('library.urls')),  # Include the library app's URLs
-    path('', views.home, name='home'),  # Add this line for the home page
+    path('', views.home, name='home'),  # Home page
     path('accounts/login/', include('django.contrib.auth.urls')),  # Ensure this line is present
     path('accounts/logout/', views.custom_logout, name='logout'),  # Use custom logout view
 ]

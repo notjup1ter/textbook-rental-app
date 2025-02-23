@@ -142,7 +142,7 @@ except ImportError:
 
 LOGOUT_REDIRECT_URL = '/'
 
-LOGIN_REDIRECT_URL = '/login/'
+LOGIN_REDIRECT_URL = '/'  # Redirect to the home page after login
 
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',  # Default backend

@@ -5,8 +5,7 @@ from .models import Profile
 
 class CustomUserCreationForm(UserCreationForm):
     email = forms.EmailField(required=True)
-    role = forms.ChoiceField(choices=Profile.USER_ROLES, required=True)
 
     class Meta:
         model = User
-        fields = ("username", "email", "password1", "password2", "role")
+        fields = ("username", "email", "password1", "password2")
