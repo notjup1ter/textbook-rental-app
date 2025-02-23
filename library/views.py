@@ -50,8 +50,7 @@ def register(request):
             user = form.save()
             role = form.cleaned_data.get('role')
             Profile.objects.create(user=user, role=role)
-            login(request, user)
-            return redirect('home')
+            return render(request, 'library/home.html')
     else:
         form = CustomUserCreationForm()
     return render(request, 'library/register.html', {'form': form})
