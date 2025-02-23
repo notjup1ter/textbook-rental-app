@@ -22,7 +22,5 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('library/', include('library.urls')),  # Include the library app's URLs
     path('', views.home, name='home'),  # Add this line for the home page
-    #path('accounts/login/', include('django.contrib.auth.urls')),  # Ensure this line is present
-    #path('accounts/logout/', views.custom_logout, name='logout'),  # Use custom logout view
     path('accounts/', include('allauth.urls')),  # Include the auth app's URLs
 ]
