@@ -58,7 +58,7 @@ def register(request):
 
 @login_required
 def redirect(request):
-    librarian_emails = ["bjayden36@gmail.com"]
+    librarian_emails = ["bjayden36@gmail.com", "chankyu2004@gmail.com", "haolinchen203@gmail.com", "xsn5hw@virginia.edu"]
     profile, created = Profile.objects.get_or_create(user=request.user)
     if request.user.email in librarian_emails:
         profile.role = 'librarian'
