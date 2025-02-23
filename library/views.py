@@ -29,7 +29,7 @@ def explore_library(request):
         'user_library_books': user_library_books
     })
 
-@login_required
+@login_required(login_url='/library/login/')
 def my_library(request):
     user_library, created = UserLibrary.objects.get_or_create(user=request.user)
     if request.method == 'POST':
@@ -62,8 +62,12 @@ def librarian_dashboard(request):
         return redirect('home')
     
     books = Book.objects.all()
+
     if request.method == 'POST':
-        # Handle book creation or editing here
-        pass
+        title = request.POST.get('title')
+        author = request.POST.get('author')
+        if title and author:
+            Book.objects.create(title=title, author=author)
+            return redirect('librarian_dashboard')
 
     return render(request, 'library/librarian_dashboard.html', {'books': books})
