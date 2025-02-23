@@ -32,6 +32,8 @@ ALLOWED_HOSTS = ['localhost','127.0.0.1','staff-build-example.herokuapp.com']
 
 # Application definition
 
+SITE_ID = 1
+
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -39,8 +41,32 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.sites',
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'allauth.socialaccount.providers.google',
     'library',  # Add your app here
 ]
+
+SOCIALACCOUNT_PROVIDERS = {
+    'google': {
+        'SCOPE': [
+            'profile',
+            'email',
+        ],
+        'AUTH_PARAMS': {
+            'access_type': 'online',
+        }
+    }
+}
+
+AUTHENTICATION_BACKENDS = (
+    'django.contrib.auth.backends.ModelBackend',
+    'allauth.account.auth_backends.AuthenticationBackend',
+)
+
+
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -50,6 +76,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'allauth.account.middleware.AccountMiddleware',
 ]
 
 ROOT_URLCONF = 'myproject.urls'
@@ -129,6 +156,20 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+#login and logout urls
+SOCIALACCOUNT_LOGIN_ON_GET = True
+SOCIALACCOUNT_AUTO_SIGNUP = True  # Automatically create accounts for Google users
+ACCOUNT_SIGNUP_REDIRECT_URL = '/library/my-library/'  # Ensure signups go to Google
+
+LOGIN_REDIRECT_URL = '/library/redirect/'
+ACCOUNT_LOGIN_REDIRECT_URL = LOGIN_REDIRECT_URL 
+ACCOUNT_USERNAME_REQUIRED = True 
+LOGOUT_REDIRECT_URL = '/library/'
+ACCOUNT_LOGOUT_REDIRECT_URL = LOGOUT_REDIRECT_URL
+ACCOUNT_LOGOUT_ON_GET = True
+
+
+
 # SHERRIFF
 # Activate Django-Heroku.
 # Use this code to avoid the psycopg2 / django-heroku error!  
@@ -140,10 +181,3 @@ try:
 except ImportError:
     found = False
 
-LOGOUT_REDIRECT_URL = '/'
-
-LOGIN_REDIRECT_URL = '/'  # Redirect to the home page after login
-
-AUTHENTICATION_BACKENDS = [
-    'django.contrib.auth.backends.ModelBackend',  # Default backend
-]

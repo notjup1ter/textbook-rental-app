@@ -41,7 +41,7 @@ def my_library(request):
 
 def custom_logout(request):
     logout(request)
-    return redirect('home')
+    return redirect('/accounts/logout/')
 
 def register(request):
     if request.method == 'POST':
@@ -55,6 +55,21 @@ def register(request):
     else:
         form = CustomUserCreationForm()
     return render(request, 'library/register.html', {'form': form})
+
+@login_required
+def redirect(request):
+    librarian_emails = ["bjayden36@gmail.com"]
+    profile, created = Profile.objects.get_or_create(user=request.user)
+    if request.user.email in librarian_emails:
+        profile.role = 'librarian'
+        profile.save()
+        return render(request, 'library/librarian_dashboard.html')
+    else: 
+        profile.role = 'patron'
+        profile.save()
+
+    return render(request, 'library/my_library.html')
+
 
 @login_required
 def librarian_dashboard(request):

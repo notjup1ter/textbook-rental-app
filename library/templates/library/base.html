@@ -1,12 +1,12 @@
 {% load custom_filters %}
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>{% block title %}Library{% endblock %}</title>
-</head>
-<body>
+  </head>
+  <body>
     <nav>
         <ul>
             <li><a href="{% url 'home' %}">Home</a></li>
@@ -17,10 +17,9 @@
                     <li><a href="{% url 'librarian_dashboard' %}">Librarian Dashboard</a></li>
                 {% endif %}
                 <li>
-                    <form method="post" action="{% url 'logout' %}" style="display:inline;">
-                        {% csrf_token %}
-                        <button type="submit" style="background:none; border:none; color:blue; cursor:pointer;">Logout</button>
-                    </form>
+                    <a href="{% url 'account_logout' %}">
+                        <button type="submit" style="background:none; border:none; color:blue; cursor:pointer;"> Log Out</button>
+                    </a>
                 </li>
             {% else %}
                 <li><a href="{% url 'login' %}">Login</a></li>
@@ -28,9 +27,6 @@
             {% endif %}
         </ul>
     </nav>
-    <div>
-        {% block content %}
-        {% endblock %}
-    </div>
-</body>
-</html> 
+    <div>{% block content %} {% endblock %}</div>
+  </body>
+</html>
