@@ -41,12 +41,12 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'library',
     'django.contrib.sites',
     'allauth',
     'allauth.account',
     'allauth.socialaccount',
-    'allauth.socialaccount.providers.google',  # Add your app here
+    'allauth.socialaccount.providers.google',
+    'library',  # Add your app here
 ]
 
 SOCIALACCOUNT_PROVIDERS = {
@@ -74,7 +74,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'allauth.account.middleware.AccountMiddleware'
+    'allauth.account.middleware.AccountMiddleware',
 ]
 
 ROOT_URLCONF = 'myproject.urls'
@@ -155,9 +155,14 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 #login and logout urls
-LOGIN_REDIRECT_URL = "/library/my-library/"
+LOGIN_REDIRECT_URL = "/"
 LOGOUT_REDIRECT_URL = "/"
 SOCIALACCOUNT_LOGIN_ON_GET = True
+SOCIALACCOUNT_AUTO_SIGNUP = True  # Automatically create accounts for Google users
+ACCOUNT_SIGNUP_REDIRECT_URL = '/accounts/google/login/'  # Ensure signups go to Google
+
+ACCOUNT_USERNAME_REQUIRED = True  # Don't require a username
+
 
 
 # SHERRIFF
