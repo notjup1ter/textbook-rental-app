@@ -17,10 +17,10 @@
                     <li><a href="{% url 'librarian_dashboard' %}">Librarian Dashboard</a></li>
                 {% endif %}
                 <li>
-                    <form method="post" action="{% url 'logout' %}" style="display:inline;">
+                    <a href="{% url 'account_logout' %}">Logout</a>
                         {% csrf_token %}
                         <button type="submit" style="background:none; border:none; color:blue; cursor:pointer;">Logout</button>
-                    </form>
+                    </a>
                 </li>
             {% else %}
                 <li><a href="{% url 'login' %}">Login</a></li>

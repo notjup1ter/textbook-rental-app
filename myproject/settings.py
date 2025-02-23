@@ -66,6 +66,8 @@ AUTHENTICATION_BACKENDS = (
     'allauth.account.auth_backends.AuthenticationBackend',
 )
 
+
+
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -155,13 +157,16 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 #login and logout urls
-LOGIN_REDIRECT_URL = "/"
-LOGOUT_REDIRECT_URL = "/"
 SOCIALACCOUNT_LOGIN_ON_GET = True
 SOCIALACCOUNT_AUTO_SIGNUP = True  # Automatically create accounts for Google users
-ACCOUNT_SIGNUP_REDIRECT_URL = '/accounts/google/login/'  # Ensure signups go to Google
+ACCOUNT_SIGNUP_REDIRECT_URL = '/library/my-library/'  # Ensure signups go to Google
 
-ACCOUNT_USERNAME_REQUIRED = True  # Don't require a username
+LOGIN_REDIRECT_URL = '/library/redirect/'
+ACCOUNT_LOGIN_REDIRECT_URL = LOGIN_REDIRECT_URL 
+ACCOUNT_USERNAME_REQUIRED = True 
+LOGOUT_REDIRECT_URL = '/library/'
+ACCOUNT_LOGOUT_REDIRECT_URL = LOGOUT_REDIRECT_URL
+ACCOUNT_LOGOUT_ON_GET = True
 
 
 
@@ -176,10 +181,3 @@ try:
 except ImportError:
     found = False
 
-LOGOUT_REDIRECT_URL = '/'
-
-LOGIN_REDIRECT_URL = '/login/'
-
-AUTHENTICATION_BACKENDS = [
-    'django.contrib.auth.backends.ModelBackend',  # Default backend
-]
