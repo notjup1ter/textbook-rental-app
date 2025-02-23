@@ -1,3 +1,4 @@
+{% load custom_filters %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -12,6 +13,9 @@
             <li><a href="{% url 'explore_library' %}">Explore Library</a></li>
             <li><a href="{% url 'my_library' %}">My Library</a></li>
             {% if user.is_authenticated %}
+                {% if user.profile.role == 'librarian' %}
+                    <li><a href="{% url 'librarian_dashboard' %}">Librarian Dashboard</a></li>
+                {% endif %}
                 <li>
                     <form method="post" action="{% url 'logout' %}" style="display:inline;">
                         {% csrf_token %}

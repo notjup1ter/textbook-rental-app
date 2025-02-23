@@ -1,8 +1,8 @@
 from django.shortcuts import render, redirect
-from .models import Book, UserLibrary
+from django.contrib.auth.models import Group
+from .models import Book, UserLibrary, Profile, ApprovedLibrarianEmail
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import logout, login
-from django.contrib.auth.forms import UserCreationForm
 from .forms import CustomUserCreationForm
 
 def home(request):
@@ -48,8 +48,22 @@ def register(request):
         form = CustomUserCreationForm(request.POST)
         if form.is_valid():
             user = form.save()
+            role = form.cleaned_data.get('role')
+            Profile.objects.create(user=user, role=role)
             login(request, user)
             return redirect('home')
     else:
         form = CustomUserCreationForm()
-    return render(request, 'library/register.html', {'form': form}) 
+    return render(request, 'library/register.html', {'form': form})
+
+@login_required
+def librarian_dashboard(request):
+    if request.user.profile.role != 'librarian':
+        return redirect('home')
+    
+    books = Book.objects.all()
+    if request.method == 'POST':
+        # Handle book creation or editing here
+        pass
+
+    return render(request, 'library/librarian_dashboard.html', {'books': books})
