@@ -20,9 +20,9 @@ def explore_library(request):
         book = Book.objects.get(id=book_id)
         if request.user.is_authenticated:
             user_library.books.add(book)
-            return redirect('my_library')
+            return redirect('library/my_library')
         else:
-            return redirect('login')
+            return redirect('library/login')
     
     return render(request, 'library/explore_library.html', {
         'books': books,
@@ -36,7 +36,7 @@ def my_library(request):
         book_id = request.POST.get('book_id')
         book = Book.objects.get(id=book_id)
         user_library.books.remove(book)
-        return redirect('my_library')
+        return render(request, 'library/my_library.html')
     return render(request, 'library/my_library.html', {'books': user_library.books.all()})
 
 def custom_logout(request):
@@ -51,7 +51,7 @@ def register(request):
             # Set the default role to 'patron'
             Profile.objects.create(user=user, role='patron')
             login(request, user)
-            return redirect('home')
+            return render(request, 'library/home.html')
     else:
         form = CustomUserCreationForm()
     return render(request, 'library/register.html', {'form': form})
@@ -74,7 +74,7 @@ def redirect(request):
 @login_required
 def librarian_dashboard(request):
     if request.user.profile.role != 'librarian':
-        return redirect('home')
+        return render(request, 'library/home.html')
     
     books = Book.objects.all()
 
@@ -83,6 +83,6 @@ def librarian_dashboard(request):
         author = request.POST.get('author')
         if title and author:
             Book.objects.create(title=title, author=author)
-            return redirect('librarian_dashboard')
+            return redirect('librarian')
 
     return render(request, 'library/librarian_dashboard.html', {'books': books})
