@@ -3,7 +3,7 @@ from django.contrib.auth.models import Group
 from .models import Book, UserLibrary, Profile, ApprovedLibrarianEmail
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import logout, login
-from .forms import CustomUserCreationForm
+from .forms import CustomUserCreationForm, ProfileForm
 
 def home(request):
     return render(request, 'library/home.html')
@@ -87,3 +87,17 @@ def librarian_dashboard(request):
             return redirect('librarian_dashboard')
 
     return render(request, 'library/librarian_dashboard.html', {'books': books})
+
+@login_required
+def profile(request):
+    profile = request.user.profile
+
+    if request.method == 'POST':
+        form = ProfileForm(request.POST, request.FILES, instance=profile)
+        if form.is_valid():
+            form.save()
+            return redirect('profile')
+    else:
+        form = ProfileForm(instance = profile)
+
+    return render(request, "library/profilepage.html", {'form': form, 'profile': profile})

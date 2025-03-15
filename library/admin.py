@@ -13,7 +13,7 @@ class ApprovedLibrarianEmailAdmin(admin.ModelAdmin):
 
 @admin.register(Profile)
 class ProfileAdmin(admin.ModelAdmin):
-    list_display = ('user', 'role')
+    list_display = ('user', 'role', 'profile_picture')
     search_fields = ('user__username', 'user__email')
     list_filter = ('role',)
 
