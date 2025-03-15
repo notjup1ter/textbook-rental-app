@@ -20,9 +20,9 @@ def explore_library(request):
         book = Book.objects.get(id=book_id)
         if request.user.is_authenticated:
             user_library.books.add(book)
-            return redirect('library/my_library')
+            return redirect('my_library')
         else:
-            return redirect('library/login')
+            return redirect('login')
     
     return render(request, 'library/explore_library.html', {
         'books': books,
@@ -36,7 +36,7 @@ def my_library(request):
         book_id = request.POST.get('book_id')
         book = Book.objects.get(id=book_id)
         user_library.books.remove(book)
-        return render(request, 'library/my_library.html')
+        return redirect('my_library')
     return render(request, 'library/my_library.html', {'books': user_library.books.all()})
 
 def custom_logout(request):
@@ -51,7 +51,7 @@ def register(request):
             # Set the default role to 'patron'
             Profile.objects.create(user=user, role='patron')
             login(request, user)
-            return render(request, 'library/home.html')
+            return redirect('library/home')
     else:
         form = CustomUserCreationForm()
     return render(request, 'library/register.html', {'form': form})
@@ -63,7 +63,7 @@ def redirect(request):
     if request.user.email in librarian_emails:
         profile.role = 'librarian'
         profile.save()
-        return render(request, 'library/librarian_dashboard.html')
+        return redirect('librarian_dashboard')
     else: 
         profile.role = 'patron'
         profile.save()
