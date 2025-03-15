@@ -1,3 +1,6 @@
 /venv
 /myproject/venv
 .idea/
+__pycache__/
+library/__pycache__/
+myproject/__pycache__/

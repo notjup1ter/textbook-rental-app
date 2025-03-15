@@ -4,18 +4,23 @@
 
 {% block content %}
 <h1>My Library</h1>
-<ul>
-    {% for book in books %}
-    <li>
-        {{ book.title }} by {{ book.author }}
-        <form method="post" style="display:inline;">
-            {% csrf_token %}
-            <input type="hidden" name="book_id" value="{{ book.id }}">
-            <button type="submit" style="background:none; border:none; color:red; cursor:pointer;">Remove</button>
-        </form>
-    </li>
-    {% empty %}
-    <li>No books in your library yet.</li>
-    {% endfor %}
-</ul>
+<div class="card">
+    <ul class="book-list">
+        {% for book in books %}
+        <li class="book-item">
+            <div>
+                <span class="book-title">{{ book.title }}</span>
+                <span class="book-author">by {{ book.author }}</span>
+            </div>
+            <form method="post" style="display:inline; margin: 0;">
+                {% csrf_token %}
+                <input type="hidden" name="book_id" value="{{ book.id }}">
+                <button type="submit" class="btn btn-danger">Remove</button>
+            </form>
+        </li>
+        {% empty %}
+        <li class="book-item">No books in your library yet.</li>
+        {% endfor %}
+    </ul>
+</div>
 {% endblock %} 

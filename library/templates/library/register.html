@@ -1,17 +1,22 @@
 {% extends 'library/base.html' %}
+{% load static %}
 
 {% block title %}Register{% endblock %}
 
 {% block content %}
-<h2>Register</h2>
-<form method="post">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit">Register</button>
-</form>
+<div class="card">
+    <h2 class="card-title">Register</h2>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" class="btn btn-primary">Register</button>
+    </form>
 
-{% load socialaccount %}
-<a href="{% provider_login_url 'google' %}">
-  Sign up with Google
-</a>
+    <div class="social-login">
+        {% load socialaccount %}
+        <a href="{% provider_login_url 'google' %}">
+            Sign up with Google
+        </a>
+    </div>
+</div>
 {% endblock %} 
