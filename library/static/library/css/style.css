@@ -532,8 +532,48 @@ nav {
 
 /* Auth Pages */
 .auth-container {
-  max-width: 500px;
+  max-width: 600px;
   margin: 0 auto;
+  padding: 2rem 1rem;
+}
+
+.auth-container .card {
+  padding: 2rem;
+}
+
+.alert {
+  padding: 1rem;
+  border-radius: 0.5rem;
+  margin-bottom: 2rem;
+}
+
+.alert-danger {
+  background-color: var(--danger-color);
+  color: white;
+}
+
+.error-message {
+  color: var(--danger-color);
+  font-size: 0.9rem;
+  margin-top: 0.5rem;
+}
+
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid var(--border-color);
+  border-radius: 0.5rem;
+  font-size: 1rem;
 }
 
 .divider {
@@ -553,17 +593,6 @@ nav {
   padding: 0 1rem;
   color: var(--text-light);
   font-size: 0.9rem;
-}
-
-.alert {
-  padding: 1rem;
-  border-radius: var(--border-radius);
-  margin-bottom: 1.5rem;
-}
-
-.alert-danger {
-  background-color: #f8d7da;
-  color: #721c24;
 }
 
 .auth-footer {
@@ -753,4 +782,26 @@ input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focu
 .dashboard-grid .book-item:last-child {
   margin-bottom: 0;
   border-bottom: none;
+}
+
+.profile-actions {
+  margin-top: 2rem;
+  display: flex;
+  gap: 1rem;
+}
+
+.auth-container .card {
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.alert {
+  padding: 1rem;
+  border-radius: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.alert-danger {
+  background-color: var(--danger-color);
+  color: white;
 } 
