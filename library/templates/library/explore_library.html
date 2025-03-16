@@ -4,20 +4,32 @@
 
 {% block content %}
 <h1>Explore Library</h1>
-<ul>
-    {% for book in books %}
-    <li>
-        {{ book.title }} by {{ book.author }}
-        {% if book in user_library_books %}
-            <span style="color:green;">Already in My Library</span>
-        {% else %}
-            <form method="post" style="display:inline;">
-                {% csrf_token %}
-                <input type="hidden" name="book_id" value="{{ book.id }}">
-                <button type="submit" style="background:none; border:none; color:blue; cursor:pointer;">Add to My Library</button>
-            </form>
-        {% endif %}
-    </li>
-    {% endfor %}
-</ul>
+<div class="card">
+    <ul class="book-list">
+        {% for book in books %}
+        <li class="book-item">
+            <div class="book-info">
+                {% if book.cover_image %}
+                <img src="{{ book.cover_image.url }}" alt="{{ book.title }} cover" class="book-cover">
+                {% endif %}
+                <div>
+                    <span class="book-title">{{ book.title }}</span>
+                    <span class="book-author">by {{ book.author }}</span>
+                </div>
+            </div>
+            <div>
+                {% if book in user_library_books %}
+                    <span class="in-library">Already in My Library</span>
+                {% else %}
+                    <form method="post" style="display:inline; margin: 0;">
+                        {% csrf_token %}
+                        <input type="hidden" name="book_id" value="{{ book.id }}">
+                        <button type="submit" class="btn btn-primary">Add to My Library</button>
+                    </form>
+                {% endif %}
+            </div>
+        </li>
+        {% endfor %}
+    </ul>
+</div>
 {% endblock %} 

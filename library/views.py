@@ -82,8 +82,13 @@ def librarian_dashboard(request):
     if request.method == 'POST':
         title = request.POST.get('title')
         author = request.POST.get('author')
+        cover_image = request.FILES.get('cover_image')
+        
         if title and author:
-            Book.objects.create(title=title, author=author)
+            book = Book(title=title, author=author)
+            if cover_image:
+                book.cover_image = cover_image
+            book.save()
             return redirect('librarian_dashboard')
 
     return render(request, 'library/librarian_dashboard.html', {'books': books})
