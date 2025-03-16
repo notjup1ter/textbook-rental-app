@@ -1,18 +1,29 @@
 {% extends 'library/base.html' %}
 
-{% block title %}Profile Page{% endblock %}
+{% block title %}Profile{% endblock %}
 
 {% block content %}
-<h1>Profile Page</h1>
-<h2>Welcome, {{ user.username }}!</h2>
-  <form method="POST" enctype="multipart/form-data">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit">Upload</button>
-  </form>
-
-  {% if profile.profile_picture %}
-    <h3>Current Profile Picture:</h3>
-    <img src="{{ profile.profile_picture.url }}" alt="Profile Picture" width="150">
-  {% endif %}
+<h1>Your Profile</h1>
+<div class="card">
+    <div class="profile-info">
+        <h2>{{ user.username }}</h2>
+        <p>Email: {{ user.email }}</p>
+        <p>Role: {{ profile.get_role_display }}</p>
+        
+        {% if profile.profile_picture %}
+        <div class="profile-picture">
+            <img src="{{ profile.profile_picture.url }}" alt="Profile Picture">
+        </div>
+        {% endif %}
+    </div>
+    
+    <div class="profile-form">
+        <h3>Update Profile Picture</h3>
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit" class="btn btn-primary">Update Profile</button>
+        </form>
+    </div>
+</div>
 {% endblock %}

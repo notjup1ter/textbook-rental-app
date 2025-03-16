@@ -46,7 +46,8 @@ INSTALLED_APPS = [
     'allauth.account',
     'allauth.socialaccount',
     'allauth.socialaccount.providers.google',
-    'library',  # Add your app here
+    'library',
+    'storages'  # Add your app here
 ]
 
 SOCIALACCOUNT_PROVIDERS = {
@@ -170,6 +171,24 @@ ACCOUNT_USERNAME_REQUIRED = True
 LOGOUT_REDIRECT_URL = '/library/'
 ACCOUNT_LOGOUT_REDIRECT_URL = LOGOUT_REDIRECT_URL
 ACCOUNT_LOGOUT_ON_GET = True
+
+
+AWS_ACCESS_KEY_ID = '***REMOVED***'
+AWS_SECRET_ACCESS_KEY = '***REMOVED***'
+AWS_STORAGE_BUCKET_NAME = 'uvatextbook-bucket'
+AWS_S3_CUSTOM_DOMAIN = '%s.s3.amazonaws.com' % AWS_STORAGE_BUCKET_NAME
+AWS_FILE_OVERWRITE = False
+MEDIA_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/media/"
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+STORAGES = {
+    "default": {
+        "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
+        },
+    "staticfiles": {
+        "BACKEND": "storages.backends.s3boto3.S3StaticStorage",
+        },
+}
 
 
 

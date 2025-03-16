@@ -6,29 +6,42 @@
 <h1>Librarian Dashboard</h1>
 
 <div class="card">
-    <h2 class="card-title">Add a New Book</h2>
-    <form method="post">
+    <h2>Add New Book</h2>
+    <form method="post" enctype="multipart/form-data">
         {% csrf_token %}
         <div class="form-group">
             <label for="title">Title:</label>
-            <input type="text" name="title" id="title" required>
+            <input type="text" id="title" name="title" required>
         </div>
         <div class="form-group">
             <label for="author">Author:</label>
-            <input type="text" name="author" id="author" required>
+            <input type="text" id="author" name="author" required>
+        </div>
+        <div class="form-group">
+            <label for="cover_image">Cover Image:</label>
+            <input type="file" id="cover_image" name="cover_image">
         </div>
         <button type="submit" class="btn btn-primary">Add Book</button>
     </form>
 </div>
 
 <div class="card">
-    <h2 class="card-title">Existing Books</h2>
+    <h2>Manage Books</h2>
     <ul class="book-list">
         {% for book in books %}
         <li class="book-item">
-            <span class="book-title">{{ book.title }}</span>
-            <span class="book-author">by {{ book.author }}</span>
+            <div class="book-info">
+                {% if book.cover_image %}
+                <img src="{{ book.cover_image.url }}" alt="{{ book.title }} cover" class="book-cover">
+                {% endif %}
+                <div>
+                    <span class="book-title">{{ book.title }}</span>
+                    <span class="book-author">by {{ book.author }}</span>
+                </div>
+            </div>
         </li>
+        {% empty %}
+        <li class="book-item">No books in the library yet.</li>
         {% endfor %}
     </ul>
 </div>

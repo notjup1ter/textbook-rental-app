@@ -8,9 +8,14 @@
     <ul class="book-list">
         {% for book in books %}
         <li class="book-item">
-            <div>
-                <span class="book-title">{{ book.title }}</span>
-                <span class="book-author">by {{ book.author }}</span>
+            <div class="book-info">
+                {% if book.cover_image %}
+                <img src="{{ book.cover_image.url }}" alt="{{ book.title }} cover" class="book-cover">
+                {% endif %}
+                <div>
+                    <span class="book-title">{{ book.title }}</span>
+                    <span class="book-author">by {{ book.author }}</span>
+                </div>
             </div>
             <div>
                 {% if book in user_library_books %}

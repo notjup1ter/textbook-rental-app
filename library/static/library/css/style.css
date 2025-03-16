@@ -1,11 +1,11 @@
-/* Global Styles */
+/* General Styles */
 body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-family: 'Arial', sans-serif;
     line-height: 1.6;
-    color: #333;
     margin: 0;
     padding: 0;
     background-color: #f5f5f5;
+    color: #333;
 }
 
 .container {
@@ -17,8 +17,8 @@ body {
 /* Navigation */
 nav {
     background-color: #2c3e50;
-    padding: 15px 0;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    color: white;
+    padding: 10px 0;
 }
 
 .nav-container {
@@ -41,15 +41,14 @@ nav {
     margin-right: 20px;
 }
 
-.nav-links li a {
-    color: #ecf0f1;
+.nav-links a {
+    color: white;
     text-decoration: none;
-    font-weight: 500;
-    transition: color 0.3s;
+    font-weight: bold;
 }
 
-.nav-links li a:hover {
-    color: #3498db;
+.nav-links a:hover {
+    text-decoration: underline;
 }
 
 .user-section {
@@ -58,61 +57,15 @@ nav {
 }
 
 .username {
-    color: #3498db;
-    font-weight: 600;
     margin-right: 15px;
-}
-
-.user-section a {
     color: #ecf0f1;
-    text-decoration: none;
-    margin-left: 10px;
-    font-weight: 500;
-    transition: color 0.3s;
-}
-
-.user-section a:hover {
-    color: #3498db;
-}
-
-.logout-btn {
-    margin-left: 10px;
-}
-
-/* Buttons */
-button, .btn {
-    padding: 8px 16px;
-    border-radius: 4px;
-    cursor: pointer;
-    font-weight: 500;
-    transition: all 0.3s;
-}
-
-button.primary, .btn-primary {
-    background-color: #3498db;
-    color: white;
-    border: none;
-}
-
-button.primary:hover, .btn-primary:hover {
-    background-color: #2980b9;
-}
-
-button.danger, .btn-danger {
-    background-color: #e74c3c;
-    color: white;
-    border: none;
-}
-
-button.danger:hover, .btn-danger:hover {
-    background-color: #c0392b;
 }
 
 /* Cards */
 .card {
     background-color: white;
     border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     padding: 20px;
     margin-bottom: 20px;
 }
@@ -120,7 +73,36 @@ button.danger:hover, .btn-danger:hover {
 .card-title {
     margin-top: 0;
     color: #2c3e50;
-    font-size: 1.5rem;
+}
+
+/* Buttons */
+.btn {
+    display: inline-block;
+    padding: 8px 16px;
+    border-radius: 4px;
+    text-decoration: none;
+    font-weight: bold;
+    cursor: pointer;
+    border: none;
+    transition: background-color 0.3s;
+}
+
+.btn-primary {
+    background-color: #3498db;
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: #2980b9;
+}
+
+.btn-danger {
+    background-color: #e74c3c;
+    color: white;
+}
+
+.btn-danger:hover {
+    background-color: #c0392b;
 }
 
 /* Book List */
@@ -133,71 +115,86 @@ button.danger:hover, .btn-danger:hover {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 15px;
+    padding: 15px 0;
     border-bottom: 1px solid #eee;
 }
 
-.book-item:last-child {
-    border-bottom: none;
+.book-info {
+    display: flex;
+    align-items: center;
+}
+
+.book-cover {
+    width: 60px;
+    height: 90px;
+    object-fit: cover;
+    margin-right: 15px;
+    border-radius: 4px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .book-title {
-    font-weight: 500;
+    font-weight: bold;
+    display: block;
+    margin-bottom: 5px;
 }
 
 .book-author {
     color: #7f8c8d;
-    font-style: italic;
+    font-size: 0.9em;
+}
+
+.in-library {
+    color: #27ae60;
+    font-weight: bold;
 }
 
 /* Forms */
-form {
-    margin-bottom: 20px;
-}
-
 .form-group {
     margin-bottom: 15px;
 }
 
-label {
+.form-group label {
     display: block;
     margin-bottom: 5px;
-    font-weight: 500;
+    font-weight: bold;
 }
 
-input[type="text"],
-input[type="email"],
-input[type="password"] {
+.form-group input[type="text"],
+.form-group input[type="email"],
+.form-group input[type="password"],
+.form-group input[type="file"] {
     width: 100%;
-    padding: 10px;
+    padding: 8px;
     border: 1px solid #ddd;
     border-radius: 4px;
-    font-size: 16px;
 }
 
-/* Headers */
-h1, h2, h3 {
-    color: #2c3e50;
+/* Profile */
+.profile-info {
+    margin-bottom: 30px;
 }
 
-h1 {
-    font-size: 2.5rem;
-    margin-bottom: 20px;
+.profile-picture img {
+    max-width: 150px;
+    border-radius: 50%;
+    margin-top: 15px;
 }
 
-h2 {
-    font-size: 2rem;
-    margin-bottom: 15px;
+/* CTA Buttons */
+.cta-buttons {
+    margin-top: 20px;
 }
 
-h3 {
-    font-size: 1.5rem;
-    margin-bottom: 10px;
+.cta-buttons .btn {
+    margin-right: 10px;
 }
 
 /* Social Login */
 .social-login {
     margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid #eee;
     text-align: center;
 }
 
@@ -208,15 +205,9 @@ h3 {
     color: white;
     text-decoration: none;
     border-radius: 4px;
-    font-weight: 500;
+    font-weight: bold;
 }
 
 .social-login a:hover {
     background-color: #3367D6;
-}
-
-/* Already in library indicator */
-.in-library {
-    color: #27ae60;
-    font-weight: 500;
 } 

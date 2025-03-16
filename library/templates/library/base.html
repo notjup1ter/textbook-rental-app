@@ -19,17 +19,22 @@
                     {% if user.profile.role == 'librarian' %}
                         <li><a href="{% url 'librarian_dashboard' %}">Librarian Dashboard</a></li>
                     {% endif %}
+                    <li>
+                        <a href="{% url 'profile' %}">Profile</a>
+                    </li>
+                    <li>
+                        <a href="{% url 'account_logout' %}">
+                            <button type="submit" style="background:none; border:none; color:blue; cursor:pointer;"> Log Out</button>
+                        </a>
+                    </li>
+                {% else %}
+                    <li><a href="{% url 'login' %}">Login</a></li>
+                    <li><a href="{% url 'register' %}">Register</a></li>
                 {% endif %}
             </ul>
             <div class="user-section">
                 {% if user.is_authenticated %}
                     <span class="username">{{ user.username }}</span>
-                    <a href="{% url 'account_logout' %}" class="logout-btn">
-                        <button type="submit" class="btn">Log Out</button>
-                    </a>
-                {% else %}
-                    <a href="{% url 'login' %}">Login</a>
-                    <a href="{% url 'register' %}">Register</a>
                 {% endif %}
             </div>
         </div>
