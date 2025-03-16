@@ -5,42 +5,78 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>{% block title %}Library{% endblock %}</title>
+    <title>{% block title %}UVA Textbook Library{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{% static 'library/css/style.css' %}">
+    <link rel="icon" href="{% static 'library/images/favicon.ico' %}" type="image/x-icon">
   </head>
   <body>
-    <nav>
-        <div class="nav-container">
-            <ul class="nav-links">
-                <li><a href="{% url 'home' %}">Home</a></li>
-                <li><a href="{% url 'explore_library' %}">Explore Library</a></li>
-                <li><a href="{% url 'my_library' %}">My Library</a></li>
-                {% if user.is_authenticated %}
-                    {% if user.profile.role == 'librarian' %}
-                        <li><a href="{% url 'librarian_dashboard' %}">Librarian Dashboard</a></li>
-                    {% endif %}
-                    <li>
-                        <a href="{% url 'profile' %}">Profile</a>
-                    </li>
-                    <li>
-                        <a href="{% url 'account_logout' %}">
-                            <button type="submit" style="background:none; border:none; color:blue; cursor:pointer;"> Log Out</button>
-                        </a>
-                    </li>
-                {% else %}
-                    <li><a href="{% url 'login' %}">Login</a></li>
-                    <li><a href="{% url 'register' %}">Register</a></li>
-                {% endif %}
-            </ul>
-            <div class="user-section">
-                {% if user.is_authenticated %}
-                    <span class="username">{{ user.username }}</span>
-                {% endif %}
-            </div>
+    <div class="page-wrapper">
+      <header>
+        <nav>
+          <div class="nav-container">
+              <div class="logo">
+                  <a href="{% url 'home' %}">
+                      <span class="logo-icon">📚</span> UVA Library
+                  </a>
+              </div>
+              <ul class="nav-links">
+                  <li><a href="{% url 'home' %}">Home</a></li>
+                  <li><a href="{% url 'explore_library' %}">Explore</a></li>
+                  <li><a href="{% url 'my_library' %}">My Library</a></li>
+                  {% if user.is_authenticated %}
+                      {% if user.profile.role == 'librarian' %}
+                          <li><a href="{% url 'librarian_dashboard' %}">Dashboard</a></li>
+                      {% endif %}
+                      <li>
+                          <a href="{% url 'profile' %}">Profile</a>
+                      </li>
+                      <li>
+                          <a href="{% url 'account_logout' %}" class="btn btn-outline">
+                              Log Out
+                          </a>
+                      </li>
+                  {% else %}
+                      <li><a href="{% url 'login' %}" class="btn btn-outline">Login</a></li>
+                      <li><a href="{% url 'register' %}" class="btn btn-primary">Register</a></li>
+                  {% endif %}
+              </ul>
+          </div>
+        </nav>
+      </header>
+      
+      <main class="main-content">
+        <div class="container">
+          {% block content %}{% endblock %}
         </div>
-    </nav>
-    <div class="container">
-        {% block content %}{% endblock %}
+      </main>
+      
+      <footer>
+        <div class="footer-container">
+          <div>
+              <h3 class="footer-title">UVA Textbook Library</h3>
+              <p class="footer-text">A student-friendly platform designed for UVA students to access, manage, and share textbooks.</p>
+          </div>
+          <div>
+              <h4 class="footer-title">Quick Links</h4>
+              <ul class="footer-links">
+                  <li><a href="{% url 'home' %}">Home</a></li>
+                  <li><a href="{% url 'explore_library' %}">Explore</a></li>
+                  <li><a href="{% url 'my_library' %}">My Library</a></li>
+              </ul>
+          </div>
+          <div>
+              <h4 class="footer-title">Contact</h4>
+              <p class="footer-text">University of Virginia<br>Charlottesville, VA 22904</p>
+              <p class="footer-text">Email: library@virginia.edu</p>
+          </div>
+        </div>
+        <div class="footer-bottom">
+          <p class="copyright">&copy; {% now "Y" %} UVA Textbook Library. All rights reserved.</p>
+        </div>
+      </footer>
     </div>
   </body>
 </html>

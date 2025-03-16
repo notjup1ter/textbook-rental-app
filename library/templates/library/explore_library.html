@@ -3,33 +3,49 @@
 {% block title %}Explore Library{% endblock %}
 
 {% block content %}
-<h1>Explore Library</h1>
+<h1>Explore Our Collection</h1>
+
 <div class="card">
+    <p>Browse through our collection of textbooks and add them to your personal library.</p>
+    
+    {% if books %}
     <ul class="book-list">
         {% for book in books %}
         <li class="book-item">
-            <div class="book-info">
-                {% if book.cover_image %}
-                <img src="{{ book.cover_image.url }}" alt="{{ book.title }} cover" class="book-cover">
-                {% endif %}
-                <div>
-                    <span class="book-title">{{ book.title }}</span>
-                    <span class="book-author">by {{ book.author }}</span>
-                </div>
+            {% if book.cover_image %}
+            <img src="{{ book.cover_image.url }}" alt="{{ book.title }} cover" class="book-cover">
+            {% else %}
+            <div class="book-cover" style="background-color: #e9ecef; display: flex; align-items: center; justify-content: center;">
+                <span style="font-size: 3rem; color: #adb5bd;">📖</span>
             </div>
-            <div>
+            {% endif %}
+            
+            <div class="book-info">
+                <span class="book-title">{{ book.title }}</span>
+                <span class="book-author">by {{ book.author }}</span>
+            </div>
+            
+            <div class="book-actions">
                 {% if book in user_library_books %}
-                    <span class="in-library">Already in My Library</span>
+                    <span class="in-library">✓ In Your Library</span>
                 {% else %}
-                    <form method="post" style="display:inline; margin: 0;">
+                    <form method="post">
                         {% csrf_token %}
                         <input type="hidden" name="book_id" value="{{ book.id }}">
-                        <button type="submit" class="btn btn-primary">Add to My Library</button>
+                        <button type="submit" class="btn btn-primary">Add to Library</button>
                     </form>
                 {% endif %}
             </div>
         </li>
         {% endfor %}
     </ul>
+    {% else %}
+    <div class="empty-state">
+        <p>No books available in the library yet.</p>
+        {% if user.profile.role == 'librarian' %}
+        <a href="{% url 'librarian_dashboard' %}" class="btn btn-primary">Add Books</a>
+        {% endif %}
+    </div>
+    {% endif %}
 </div>
 {% endblock %} 

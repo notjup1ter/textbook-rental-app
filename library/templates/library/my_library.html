@@ -4,28 +4,44 @@
 
 {% block content %}
 <h1>My Library</h1>
+
 <div class="card">
+    <p>Manage your personal collection of textbooks.</p>
+    
+    {% if books %}
     <ul class="book-list">
         {% for book in books %}
         <li class="book-item">
-            <div class="book-info">
-                {% if book.cover_image %}
-                <img src="{{ book.cover_image.url }}" alt="{{ book.title }} cover" class="book-cover">
-                {% endif %}
-                <div>
-                    <span class="book-title">{{ book.title }}</span>
-                    <span class="book-author">by {{ book.author }}</span>
-                </div>
+            {% if book.cover_image %}
+            <img src="{{ book.cover_image.url }}" alt="{{ book.title }} cover" class="book-cover">
+            {% else %}
+            <div class="book-cover" style="background-color: #e9ecef; display: flex; align-items: center; justify-content: center;">
+                <span style="font-size: 3rem; color: #adb5bd;">📖</span>
             </div>
-            <form method="post" style="display:inline; margin: 0;">
-                {% csrf_token %}
-                <input type="hidden" name="book_id" value="{{ book.id }}">
-                <button type="submit" class="btn btn-danger">Remove</button>
-            </form>
+            {% endif %}
+            
+            <div class="book-info">
+                <span class="book-title">{{ book.title }}</span>
+                <span class="book-author">by {{ book.author }}</span>
+            </div>
+            
+            <div class="book-actions">
+                <form method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="book_id" value="{{ book.id }}">
+                    <button type="submit" class="btn btn-danger">Remove</button>
+                </form>
+            </div>
         </li>
-        {% empty %}
-        <li class="book-item">No books in your library yet.</li>
         {% endfor %}
     </ul>
+    {% else %}
+    <div class="empty-state" style="text-align: center; padding: 3rem 1rem;">
+        <div style="font-size: 4rem; margin-bottom: 1rem;">📚</div>
+        <h3>Your library is empty</h3>
+        <p>Start adding books from our collection to build your personal library.</p>
+        <a href="{% url 'explore_library' %}" class="btn btn-primary">Explore Books</a>
+    </div>
+    {% endif %}
 </div>
 {% endblock %} 

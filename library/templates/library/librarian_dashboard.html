@@ -5,44 +5,58 @@
 {% block content %}
 <h1>Librarian Dashboard</h1>
 
-<div class="card">
-    <h2>Add New Book</h2>
-    <form method="post" enctype="multipart/form-data">
-        {% csrf_token %}
-        <div class="form-group">
-            <label for="title">Title:</label>
-            <input type="text" id="title" name="title" required>
-        </div>
-        <div class="form-group">
-            <label for="author">Author:</label>
-            <input type="text" id="author" name="author" required>
-        </div>
-        <div class="form-group">
-            <label for="cover_image">Cover Image:</label>
-            <input type="file" id="cover_image" name="cover_image">
-        </div>
-        <button type="submit" class="btn btn-primary">Add Book</button>
-    </form>
-</div>
-
-<div class="card">
-    <h2>Manage Books</h2>
-    <ul class="book-list">
-        {% for book in books %}
-        <li class="book-item">
-            <div class="book-info">
-                {% if book.cover_image %}
-                <img src="{{ book.cover_image.url }}" alt="{{ book.title }} cover" class="book-cover">
-                {% endif %}
-                <div>
-                    <span class="book-title">{{ book.title }}</span>
-                    <span class="book-author">by {{ book.author }}</span>
-                </div>
+<div class="dashboard-grid" style="display: grid; grid-template-columns: 1fr 2fr; gap: 2rem;">
+    <div class="card">
+        <h2 class="card-title">Add New Book</h2>
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="title">Title</label>
+                <input type="text" id="title" name="title" class="form-control" required>
             </div>
-        </li>
-        {% empty %}
-        <li class="book-item">No books in the library yet.</li>
-        {% endfor %}
-    </ul>
+            <div class="form-group">
+                <label for="author">Author</label>
+                <input type="text" id="author" name="author" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label for="cover_image">Cover Image</label>
+                <input type="file" id="cover_image" name="cover_image" class="form-control">
+                <small style="display: block; margin-top: 0.5rem; color: var(--text-light);">Recommended size: 400x600px</small>
+            </div>
+            <button type="submit" class="btn btn-primary" style="width: 100%;">Add Book</button>
+        </form>
+    </div>
+
+    <div class="card">
+        <h2 class="card-title">Manage Library Collection</h2>
+        
+        {% if books %}
+        <ul class="book-list">
+            {% for book in books %}
+            <li class="book-item" style="flex-direction: row; align-items: center; padding: 1rem;">
+                <div class="book-info" style="flex-direction: row; align-items: center;">
+                    {% if book.cover_image %}
+                    <img src="{{ book.cover_image.url }}" alt="{{ book.title }} cover" style="width: 60px; height: 90px; object-fit: cover; margin-right: 1rem;">
+                    {% else %}
+                    <div style="width: 60px; height: 90px; background-color: #e9ecef; display: flex; align-items: center; justify-content: center; margin-right: 1rem;">
+                        <span style="font-size: 1.5rem; color: #adb5bd;">📖</span>
+                    </div>
+                    {% endif %}
+                    <div>
+                        <span class="book-title">{{ book.title }}</span>
+                        <span class="book-author">by {{ book.author }}</span>
+                    </div>
+                </div>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <div class="empty-state" style="text-align: center; padding: 3rem 1rem;">
+            <div style="font-size: 4rem; margin-bottom: 1rem;">📚</div>
+            <h3>No books in the library yet</h3>
+            <p>Start adding books using the form on the left.</p>
+        </div>
+        {% endif %}
+    </div>
 </div>
 {% endblock %} 
