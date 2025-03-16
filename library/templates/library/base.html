@@ -1,3 +1,4 @@
+{% load static %}
 {% load custom_filters %}
 <!DOCTYPE html>
 <html lang="en">
@@ -5,28 +6,36 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>{% block title %}Library{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'library/css/style.css' %}">
   </head>
   <body>
     <nav>
-        <ul>
-            <li><a href="{% url 'home' %}">Home</a></li>
-            <li><a href="{% url 'explore_library' %}">Explore Library</a></li>
-            <li><a href="{% url 'my_library' %}">My Library</a></li>
-            {% if user.is_authenticated %}
-                {% if user.profile.role == 'librarian' %}
-                    <li><a href="{% url 'librarian_dashboard' %}">Librarian Dashboard</a></li>
+        <div class="nav-container">
+            <ul class="nav-links">
+                <li><a href="{% url 'home' %}">Home</a></li>
+                <li><a href="{% url 'explore_library' %}">Explore Library</a></li>
+                <li><a href="{% url 'my_library' %}">My Library</a></li>
+                {% if user.is_authenticated %}
+                    {% if user.profile.role == 'librarian' %}
+                        <li><a href="{% url 'librarian_dashboard' %}">Librarian Dashboard</a></li>
+                    {% endif %}
                 {% endif %}
-                <li>
-                    <a href="{% url 'account_logout' %}">
-                        <button type="submit" style="background:none; border:none; color:blue; cursor:pointer;"> Log Out</button>
+            </ul>
+            <div class="user-section">
+                {% if user.is_authenticated %}
+                    <span class="username">{{ user.username }}</span>
+                    <a href="{% url 'account_logout' %}" class="logout-btn">
+                        <button type="submit" class="btn">Log Out</button>
                     </a>
-                </li>
-            {% else %}
-                <li><a href="{% url 'login' %}">Login</a></li>
-                <li><a href="{% url 'register' %}">Register</a></li>
-            {% endif %}
-        </ul>
+                {% else %}
+                    <a href="{% url 'login' %}">Login</a>
+                    <a href="{% url 'register' %}">Register</a>
+                {% endif %}
+            </div>
+        </div>
     </nav>
-    <div>{% block content %} {% endblock %}</div>
+    <div class="container">
+        {% block content %}{% endblock %}
+    </div>
   </body>
 </html>
