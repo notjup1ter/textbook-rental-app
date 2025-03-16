@@ -1,4 +1,4 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.models import Group
 from .models import Book, UserLibrary, Profile, ApprovedLibrarianEmail
 from django.contrib.auth.decorators import login_required
@@ -20,7 +20,7 @@ def explore_library(request):
         book = Book.objects.get(id=book_id)
         if request.user.is_authenticated:
             user_library.books.add(book)
-            return redirect('my_library')
+            return redirect('explore_library')
         else:
             return redirect('login')
     
@@ -80,16 +80,24 @@ def librarian_dashboard(request):
     books = Book.objects.all()
 
     if request.method == 'POST':
-        title = request.POST.get('title')
-        author = request.POST.get('author')
-        cover_image = request.FILES.get('cover_image')
-        
-        if title and author:
-            book = Book(title=title, author=author)
-            if cover_image:
-                book.cover_image = cover_image
-            book.save()
+        if 'delete_book' in request.POST:
+            # Handle book deletion
+            book_id = request.POST.get('book_id')
+            book = get_object_or_404(Book, id=book_id)
+            book.delete()
             return redirect('librarian_dashboard')
+        else:
+            # Handle book creation
+            title = request.POST.get('title')
+            author = request.POST.get('author')
+            cover_image = request.FILES.get('cover_image')
+            
+            if title and author:
+                book = Book(title=title, author=author)
+                if cover_image:
+                    book.cover_image = cover_image
+                book.save()
+                return redirect('librarian_dashboard')
 
     return render(request, 'library/librarian_dashboard.html', {'books': books})
 

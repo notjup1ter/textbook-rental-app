@@ -10,6 +10,7 @@
   --text-light: #6c757d;
   --success-color: #28a745;
   --danger-color: #dc3545;
+  --danger-dark: #bd2130;
   --border-radius: 8px;
   --box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   --transition: all 0.3s ease;
@@ -247,7 +248,7 @@ nav {
 }
 
 .btn-danger:hover {
-  background-color: #bd2130;
+  background-color: var(--danger-dark);
   transform: translateY(-2px);
 }
 
@@ -722,4 +723,34 @@ input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focu
   border-color: var(--primary-color);
   outline: none;
   box-shadow: 0 0 0 3px rgba(74, 111, 165, 0.2);
+}
+
+/* Book Actions in Dashboard */
+.book-actions {
+  display: flex;
+  align-items: center;
+}
+
+.book-actions .btn {
+  margin-left: 0.5rem;
+}
+
+.book-actions .btn-danger {
+  background-color: var(--danger-color);
+  color: white;
+}
+
+.book-actions .btn-danger:hover {
+  background-color: var(--danger-dark);
+}
+
+/* Dashboard Book List */
+.dashboard-grid .book-item {
+  margin-bottom: 1rem;
+  border-bottom: 1px solid #eee;
+}
+
+.dashboard-grid .book-item:last-child {
+  margin-bottom: 0;
+  border-bottom: none;
 } 

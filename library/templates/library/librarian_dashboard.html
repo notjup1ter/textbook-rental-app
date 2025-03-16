@@ -33,7 +33,7 @@
         {% if books %}
         <ul class="book-list">
             {% for book in books %}
-            <li class="book-item" style="flex-direction: row; align-items: center; padding: 1rem;">
+            <li class="book-item" style="flex-direction: row; align-items: center; padding: 1rem; justify-content: space-between;">
                 <div class="book-info" style="flex-direction: row; align-items: center;">
                     {% if book.cover_image %}
                     <img src="{{ book.cover_image.url }}" alt="{{ book.title }} cover" style="width: 60px; height: 90px; object-fit: cover; margin-right: 1rem;">
@@ -46,6 +46,14 @@
                         <span class="book-title">{{ book.title }}</span>
                         <span class="book-author">by {{ book.author }}</span>
                     </div>
+                </div>
+                <div class="book-actions">
+                    <form method="post" style="display: inline;">
+                        {% csrf_token %}
+                        <input type="hidden" name="book_id" value="{{ book.id }}">
+                        <input type="hidden" name="delete_book" value="true">
+                        <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to delete this book?')">Delete</button>
+                    </form>
                 </div>
             </li>
             {% endfor %}
