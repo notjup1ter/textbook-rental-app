@@ -1,0 +1,222 @@
+/* Global Styles */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    line-height: 1.6;
+    color: #333;
+    margin: 0;
+    padding: 0;
+    background-color: #f5f5f5;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+/* Navigation */
+nav {
+    background-color: #2c3e50;
+    padding: 15px 0;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.nav-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+.nav-links {
+    display: flex;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.nav-links li {
+    margin-right: 20px;
+}
+
+.nav-links li a {
+    color: #ecf0f1;
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.3s;
+}
+
+.nav-links li a:hover {
+    color: #3498db;
+}
+
+.user-section {
+    display: flex;
+    align-items: center;
+}
+
+.username {
+    color: #3498db;
+    font-weight: 600;
+    margin-right: 15px;
+}
+
+.user-section a {
+    color: #ecf0f1;
+    text-decoration: none;
+    margin-left: 10px;
+    font-weight: 500;
+    transition: color 0.3s;
+}
+
+.user-section a:hover {
+    color: #3498db;
+}
+
+.logout-btn {
+    margin-left: 10px;
+}
+
+/* Buttons */
+button, .btn {
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.3s;
+}
+
+button.primary, .btn-primary {
+    background-color: #3498db;
+    color: white;
+    border: none;
+}
+
+button.primary:hover, .btn-primary:hover {
+    background-color: #2980b9;
+}
+
+button.danger, .btn-danger {
+    background-color: #e74c3c;
+    color: white;
+    border: none;
+}
+
+button.danger:hover, .btn-danger:hover {
+    background-color: #c0392b;
+}
+
+/* Cards */
+.card {
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.card-title {
+    margin-top: 0;
+    color: #2c3e50;
+    font-size: 1.5rem;
+}
+
+/* Book List */
+.book-list {
+    list-style: none;
+    padding: 0;
+}
+
+.book-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    border-bottom: 1px solid #eee;
+}
+
+.book-item:last-child {
+    border-bottom: none;
+}
+
+.book-title {
+    font-weight: 500;
+}
+
+.book-author {
+    color: #7f8c8d;
+    font-style: italic;
+}
+
+/* Forms */
+form {
+    margin-bottom: 20px;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 500;
+}
+
+input[type="text"],
+input[type="email"],
+input[type="password"] {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 16px;
+}
+
+/* Headers */
+h1, h2, h3 {
+    color: #2c3e50;
+}
+
+h1 {
+    font-size: 2.5rem;
+    margin-bottom: 20px;
+}
+
+h2 {
+    font-size: 2rem;
+    margin-bottom: 15px;
+}
+
+h3 {
+    font-size: 1.5rem;
+    margin-bottom: 10px;
+}
+
+/* Social Login */
+.social-login {
+    margin-top: 20px;
+    text-align: center;
+}
+
+.social-login a {
+    display: inline-block;
+    padding: 10px 20px;
+    background-color: #4285F4;
+    color: white;
+    text-decoration: none;
+    border-radius: 4px;
+    font-weight: 500;
+}
+
+.social-login a:hover {
+    background-color: #3367D6;
+}
+
+/* Already in library indicator */
+.in-library {
+    color: #27ae60;
+    font-weight: 500;
+} 

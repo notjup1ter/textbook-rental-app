@@ -1,0 +1,18 @@
+{% extends 'library/base.html' %}
+
+{% block title %}Profile Page{% endblock %}
+
+{% block content %}
+<h1>Profile Page</h1>
+<h2>Welcome, {{ user.username }}!</h2>
+  <form method="POST" enctype="multipart/form-data">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Upload</button>
+  </form>
+
+  {% if profile.profile_picture %}
+    <h3>Current Profile Picture:</h3>
+    <img src="{{ profile.profile_picture.url }}" alt="Profile Picture" width="150">
+  {% endif %}
+{% endblock %}
