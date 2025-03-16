@@ -29,6 +29,47 @@ Welcome to the UVA Textbook Rental App – a student-friendly platform designed 
 
 - **Role Management:** Admins can change user roles between 'librarian' and 'patron' using the Django admin interface. This allows for flexible management of user permissions and access levels.
 
+## Setup Instructions
+
+### Environment Variables
+
+This project uses environment variables to store sensitive information. Follow these steps to set up your environment:
+
+1. Create a `.env` file in the root directory of the project
+2. Add the following variables to the file:
+
+```
+# Django Secret Key
+SECRET_KEY=your_secret_key_here
+
+# AWS Credentials (if using S3 for storage)
+AWS_ACCESS_KEY_ID=your_aws_access_key
+AWS_SECRET_ACCESS_KEY=your_aws_secret_key
+AWS_STORAGE_BUCKET_NAME=your_bucket_name
+
+# Debug Setting
+DEBUG=True
+```
+
+3. Install the required packages:
+
+```bash
+pip install -r requirements.txt
+```
+
+4. Run migrations:
+
+```bash
+python manage.py makemigrations
+python manage.py migrate
+```
+
+5. Start the development server:
+
+```bash
+python manage.py runserver
+```
+
 ## Contributions
 - Haolin: Testing Manager
 - Alden: Requirements Manger
