@@ -70,7 +70,9 @@ class ViewTest(TestCase):
         self.assign_roles_url = reverse("redirect")
         self.librarian_dashboard_url = reverse("librarian_dashboard")
         self.profile_url = reverse("profile")
-        self.user = User.objects.create(username="gamma", password="abc")
+
+        self.user = User.objects.create_user(username="gamma", password="abc")
+
         self.library = UserLibrary.objects.create(user=self.user)
         self.profile = Profile.objects.create(user=self.user, role="patron")
         self.book = Book.objects.create(title="beta", author="b_author")
@@ -81,10 +83,27 @@ class ViewTest(TestCase):
         self.assertTemplateUsed(response_code, "library/home.html")
         self.assertContains(response_code, self.home_url)
 
-    def test_explore(self):
+    def test_explore_library(self):
         response_code = self.client.get(self.explore_library_url)
         self.assertEqual(response_code.status_code, 200)
         self.assertTemplateUsed(response_code, "library/explore_library.html")
         self.assertContains(response_code, self.explore_library_url)
         self.assertContains(response_code, self.book.title)
         self.assertContains(response_code, self.book.author)
+
+    def test_my_library_redirect(self):
+        response_code = self.client.get(self.my_library_url)
+        self.assertEqual(response_code.status_code, 302)
+
+    def test_my_library_with_login(self):
+        self.client.login(username="gamma", password="abc")
+        response_code = self.client.get(self.my_library_url)
+        self.assertEqual(response_code.status_code, 200)
+        self.assertTemplateUsed(response_code, "library/my_library.html")
+        self.library.books.add(self.book)
+        self.library.save()
+        self.assertIn(self.book, self.library.books.all())
+        response = self.client.post(self.my_library_url, {'book_id': self.book.id})
+        self.assertRedirects(response, self.my_library_url)
+        self.library.refresh_from_db()
+        self.assertNotIn(self.book, self.library.books.all())
