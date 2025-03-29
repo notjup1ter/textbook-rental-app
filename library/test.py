@@ -66,7 +66,7 @@ class ViewTest(TestCase):
         self.home_url = reverse("home")
         self.explore_library_url = reverse("explore_library")
         self.my_library_url = reverse("my_library")
-        self.register_library_url = reverse("register_library")
+        self.register_library_url = reverse("register")
         self.assign_roles_url = reverse("redirect")
         self.librarian_dashboard_url = reverse("librarian_dashboard")
         self.profile_url = reverse("profile")
@@ -74,3 +74,9 @@ class ViewTest(TestCase):
         self.library = UserLibrary.objects.create(user=self.user)
         self.profile = Profile.objects.create(user=self.user, role="patron")
         self.book = Book.objects.create(title="beta", author="b_author")
+
+    def test_home(self):
+        response_code = self.client.get(self.home_url)
+        self.assertEqual(response_code.status_code, 200)
+        self.assertTemplateUsed(response_code, "library/home.html")
+        self.assertContains(response_code, self.home_url)
