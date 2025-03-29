@@ -1,0 +1,43 @@
+{% extends 'library/base.html' %}
+
+{% block title %}Collections{% endblock %}
+
+{% block content %}
+<h1>User collections</h1>
+
+<div class="card">
+    <p>Look through other's collections of books and see what others are interedted in!</p>
+    
+    {% if collections %}
+    <ul class="book-list">
+        {% for collection in collections %}
+        <li class="book-item">
+            {% if collection.cover_image %}
+            <img src="{{ collection.cover_image.url }}" alt="{{ collection.title }} cover" class="book-cover">
+            {% else %}
+            <div class="book-cover" style="background-color: #e9ecef; display: flex; align-items: center; justify-content: center;">
+                <span style="font-size: 3rem; color: #adb5bd;">📖</span>
+            </div>
+            {% endif %}
+            
+            <div class="book-info">
+                <span class="book-title">{{ collection.title }}</span>
+                <span class="book-author">{{ collection.description }}</span>
+                <span class="book-author">by {{ collection.user }}</span>
+            </div>
+            
+            <div class="book-actions">
+                {% if collection in user_collections %}
+                    <span class="in-library">✓ Made by you</span>
+                {% endif %}
+            </div>
+        </li>
+        {% endfor %}
+    </ul>
+    {% else %}
+    <div class="empty-state">
+        <p>No collections available to view yet.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %} 

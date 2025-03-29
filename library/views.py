@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.models import Group
-from .models import Book, UserLibrary, Profile, ApprovedLibrarianEmail
+from .models import Book, UserLibrary, Profile, ApprovedLibrarianEmail, Collection
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import logout, login
 from .forms import CustomUserCreationForm, ProfileForm
@@ -114,3 +114,16 @@ def profile(request):
         form = ProfileForm(instance = profile)
 
     return render(request, "library/profilepage.html", {'form': form, 'profile': profile})
+
+@login_required
+def collections(request):
+    collections = Collection.objects.all()
+    user_collections = []
+    if request.user.is_authenticated:
+        user_collections = Collection.objects.filter(user=request.user)
+
+    
+    return render(request, 'library/collection_page.html', {
+        'collections': collections,
+        'user_collections': user_collections
+    })

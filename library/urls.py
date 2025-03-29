@@ -13,6 +13,7 @@ urlpatterns = [
     path('logout/', views.custom_logout, name='logout'),
     path('redirect/', views.assign_role, name='redirect'),
     path('profile/', views.profile, name='profile'),
+    path('collections/', views.collections, name='collections'),
     path('change-password/', 
         login_required(auth_views.PasswordChangeView.as_view(
             template_name='library/change_password.html',
