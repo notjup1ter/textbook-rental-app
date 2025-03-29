@@ -1,6 +1,7 @@
-from django.test import TestCase
+from django.test import TestCase, Client
 from .models import Book, UserLibrary, Profile, ApprovedLibrarianEmail
 from django.contrib.auth.models import User
+from django.urls import reverse
 
 class BookTest(TestCase):
     def setUp(self):
@@ -57,3 +58,19 @@ class ApprovedLibrarianEmailTest(TestCase):
 
     def test_profile_str(self):
         self.assertEqual(str(self.email), "hello.com")
+
+
+class ViewTest(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.home_url = reverse("home")
+        self.explore_library_url = reverse("explore_library")
+        self.my_library_url = reverse("my_library")
+        self.register_library_url = reverse("register_library")
+        self.assign_roles_url = reverse("redirect")
+        self.librarian_dashboard_url = reverse("librarian_dashboard")
+        self.profile_url = reverse("profile")
+        self.user = User.objects.create(username="gamma", password="abc")
+        self.library = UserLibrary.objects.create(user=self.user)
+        self.profile = Profile.objects.create(user=self.user, role="patron")
+        self.book = Book.objects.create(title="beta", author="b_author")

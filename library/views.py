@@ -113,4 +113,4 @@ def profile(request):
     else:
         form = ProfileForm(instance = profile)
 
-    return render(request, "library/profilepage.html", {'form': form, 'profile': profile})
+    return render(request, "library/profilepage.html", {'forms': form, 'profile': profile})
