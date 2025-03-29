@@ -80,3 +80,11 @@ class ViewTest(TestCase):
         self.assertEqual(response_code.status_code, 200)
         self.assertTemplateUsed(response_code, "library/home.html")
         self.assertContains(response_code, self.home_url)
+
+    def test_explore(self):
+        response_code = self.client.get(self.explore_library_url)
+        self.assertEqual(response_code.status_code, 200)
+        self.assertTemplateUsed(response_code, "library/explore_library.html")
+        self.assertContains(response_code, self.explore_library_url)
+        self.assertContains(response_code, self.book.title)
+        self.assertContains(response_code, self.book.author)
