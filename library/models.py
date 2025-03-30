@@ -25,6 +25,9 @@ class Profile(models.Model):
     role = models.CharField(max_length=10, choices=USER_ROLES, default='patron')
     profile_picture = models.ImageField(upload_to='profile_pictures/', blank=True, null=True)
 
+    theme = (('light', 'Light'), ('dark', 'Dark'))
+    preference = models.CharField(max_length=5, choices=theme, default='light')
+
     def __str__(self):
         return f"{self.user.username} - {self.role}"
 
