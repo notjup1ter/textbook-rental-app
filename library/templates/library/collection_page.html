@@ -1,0 +1,87 @@
+{% extends 'library/base.html' %}
+
+{% block title %}Collections{% endblock %}
+
+{% block content %}
+<h1>Book Collections</h1>
+
+<div class="dashboard-grid" style="display: grid; grid-template-columns: 1fr 2fr; gap: 2rem;">
+    <!-- Create Collection Form -->
+    <div class="card">
+        <h2 class="card-title">Create New Collection</h2>
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="{{ form.title.id_for_label }}">Collection Title</label>
+                {{ form.title }}
+            </div>
+            <div class="form-group">
+                <label for="{{ form.description.id_for_label }}">Description</label>
+                {{ form.description }}
+            </div>
+            <div class="form-group">
+                <label for="{{ form.cover_image.id_for_label }}">Cover Image</label>
+                {{ form.cover_image }}
+                <small style="display: block; margin-top: 0.5rem; color: var(--text-light);">Optional: Add a cover image for your collection</small>
+            </div>
+            <button type="submit" class="btn btn-primary" style="width: 100%;">Create Collection</button>
+        </form>
+    </div>
+
+    <!-- Collections List -->
+    <div class="card">
+        <h2 class="card-title">Browse Collections</h2>
+        {% if collections %}
+        <ul class="book-list">
+            {% for collection in collections %}
+            <li class="book-item">
+                {% if collection.cover_image %}
+                <img src="{{ collection.cover_image.url }}" alt="{{ collection.title }} cover" class="book-cover">
+                {% else %}
+                <div class="book-cover" style="background-color: #e9ecef; display: flex; align-items: center; justify-content: center;">
+                    <span style="font-size: 3rem; color: #adb5bd;">📚</span>
+                </div>
+                {% endif %}
+                
+                <div class="book-info">
+                    <h3 class="book-title">
+                        <a href="{% url 'collection_detail' collection.id %}" style="color: inherit; text-decoration: none;">
+                            {{ collection.title }}
+                        </a>
+                    </h3>
+                    <p class="book-author">Created by {{ collection.user.username }}</p>
+                    <p>{{ collection.description }}</p>
+                    
+                    {% if collection.books.all %}
+                    <div class="collection-books" style="margin-top: 1rem;">
+                        <h4 style="font-size: 0.9rem; color: var(--text-light);">Books in this collection:</h4>
+                        <ul style="list-style: none; padding: 0;">
+                            {% for book in collection.books.all|slice:":3" %}
+                            <li style="font-size: 0.9rem;">{{ book.title }}</li>
+                            {% endfor %}
+                            {% if collection.books.count > 3 %}
+                            <li style="font-size: 0.9rem; color: var(--text-light);">
+                                and {{ collection.books.count|add:"-3" }} more...
+                            </li>
+                            {% endif %}
+                        </ul>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="book-actions">
+                    {% if collection.user == user %}
+                        <span class="in-library">✓ Your Collection</span>
+                    {% endif %}
+                </div>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <div class="empty-state">
+            <p>No collections available yet. Create your first collection!</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %} 

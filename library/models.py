@@ -5,6 +5,7 @@ class Book(models.Model):
     title = models.CharField(max_length=200)
     author = models.CharField(max_length=100)
     cover_image = models.ImageField(upload_to='book_covers/', blank=True, null=True)
+    pdf_file = models.FileField(upload_to='book_pdfs/', blank=True, null=True)
 
     def __str__(self):
         return self.title
@@ -33,3 +34,14 @@ class ApprovedLibrarianEmail(models.Model):
 
     def __str__(self):
         return self.email 
+    
+
+class Collection(models.Model):
+    title = models.CharField(max_length=200)
+    description = models.TextField()
+    books = models.ManyToManyField(Book, blank=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    cover_image = models.ImageField(upload_to='collection_covers/', blank=True, null=True)
+
+    def __str__(self):
+        return self.title

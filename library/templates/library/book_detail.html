@@ -1,0 +1,61 @@
+{% extends 'library/base.html' %}
+
+{% block title %}{{ book.title }}{% endblock %}
+
+{% block content %}
+<div class="book-detail-container" style="max-width: 1200px; margin: 0 auto;">
+    <div class="book-header" style="display: grid; grid-template-columns: 300px 1fr; gap: 2rem; margin-bottom: 2rem;">
+        <div class="book-cover-container">
+            {% if book.cover_image %}
+            <img src="{{ book.cover_image.url }}" alt="{{ book.title }} cover" style="width: 100%; border-radius: 8px; box-shadow: var(--box-shadow);">
+            {% else %}
+            <div style="width: 100%; aspect-ratio: 2/3; background-color: #e9ecef; display: flex; align-items: center; justify-content: center; border-radius: 8px;">
+                <span style="font-size: 4rem; color: #adb5bd;">📖</span>
+            </div>
+            {% endif %}
+            
+            <div class="book-actions" style="margin-top: 1rem;">
+                {% if book in user_library_books %}
+                    <span class="in-library" style="display: block; text-align: center; padding: 0.5rem; background-color: var(--success-color); color: white; border-radius: var(--border-radius);">✓ In Your Library</span>
+                {% else %}
+                    <form method="post" action="{% url 'explore_library' %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="book_id" value="{{ book.id }}">
+                        <button type="submit" class="btn btn-primary" style="width: 100%;">Add to Library</button>
+                    </form>
+                {% endif %}
+                
+                {% if user.is_authenticated %}
+                <div class="dropdown" style="margin-top: 0.5rem;">
+                    <form method="post" action="{% url 'add_to_collection' book.id %}">
+                        {% csrf_token %}
+                        <select name="collection_id" class="form-control" style="margin-bottom: 0.5rem;">
+                            <option value="">Add to Collection...</option>
+                            {% for collection in user_collections %}
+                            <option value="{{ collection.id }}">{{ collection.title }}</option>
+                            {% endfor %}
+                        </select>
+                        <button type="submit" class="btn btn-outline" style="width: 100%;">Add to Collection</button>
+                    </form>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="book-info">
+            <h1 style="margin-bottom: 0.5rem;">{{ book.title }}</h1>
+            <p class="book-author" style="font-size: 1.2rem; color: var(--text-light); margin-bottom: 1.5rem;">by {{ book.author }}</p>
+        </div>
+    </div>
+    
+    {% if book.pdf_file %}
+    <div class="pdf-container" style="width: 100%; height: 800px; border-radius: 8px; overflow: hidden; box-shadow: var(--box-shadow);">
+        <embed src="{{ book.pdf_file.url }}" type="application/pdf" width="100%" height="100%">
+    </div>
+    {% else %}
+    <div class="no-pdf" style="text-align: center; padding: 3rem; background-color: #f8f9fa; border-radius: 8px;">
+        <p>No PDF available for this book.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %} 

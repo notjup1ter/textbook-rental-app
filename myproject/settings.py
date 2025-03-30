@@ -186,10 +186,10 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 STORAGES = {
     "default": {
         "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
-        },
+    },
     "staticfiles": {
         "BACKEND": "storages.backends.s3boto3.S3StaticStorage",
-        },
+    },
 }
 
 
