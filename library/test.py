@@ -128,3 +128,8 @@ class ViewTest(TestCase):
         self.assertRedirects(response_code, self.librarian_dashboard_url)
         profile = Profile.objects.get(user=librarian_user)
         self.assertEqual(profile.role, "librarian")
+
+    def test_profile_view(self):
+        self.client.login(username="gamma", password="abc")
+        response_code = self.client.get(self.profile_url)
+        self.assertTemplateUsed(response_code, "library/profilepage.html")
