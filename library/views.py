@@ -7,7 +7,11 @@ from .forms import CustomUserCreationForm, ProfileForm, CollectionForm, BookForm
 from django.http import FileResponse, Http404
 
 def home(request):
-    return render(request, 'library/home.html')
+    if request.user.is_authenticated:
+        theme = request.user.profile.preference
+    else:
+        theme = request.session.get('theme', 'light')
+    return render(request, 'library/home.html', {'theme': theme})
 
 def explore_library(request):
     books = Book.objects.all()
@@ -218,3 +222,21 @@ def edit_book(request, book_id):
         'form': form,
         'book': book
     })
+
+def toggle_theme(request):
+    if request.user.is_authenticated:
+        profile = request.user.profile
+        if (profile.prefernece == 'light'):
+            profile.theme = 'dark'
+        else:
+            profile.theme = 'light'
+        profile.save()
+    else:
+        cur = request.session.get('theme', 'light')
+        if cur == 'light':
+            changed = 'dark'
+        else:
+            changed = 'light'
+        request.session['theme'] = changed
+
+    return redirect('home')
