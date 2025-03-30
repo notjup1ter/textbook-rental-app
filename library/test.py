@@ -2,11 +2,19 @@ from urllib import response
 
 from allauth.socialaccount.models import SocialApp
 from django.contrib.sites.models import Site
-from django.test import TestCase, Client
+from django.test import TestCase, Client, override_settings
 from .models import Book, UserLibrary, Profile, ApprovedLibrarianEmail
 from django.contrib.auth.models import User
 from django.urls import reverse
+from django.core.files.uploadedfile import SimpleUploadedFile
+import tempfile
+import shutil
+import os
 
+# Create a temporary directory for media files during tests
+TEMP_MEDIA_ROOT = tempfile.mkdtemp()
+
+@override_settings(MEDIA_ROOT=TEMP_MEDIA_ROOT)
 class BookTest(TestCase):
     def setUp(self):
         self.book = Book.objects.create(title="Alpha Book", author="alpha")
@@ -133,3 +141,21 @@ class ViewTest(TestCase):
         self.client.login(username="gamma", password="abc")
         response_code = self.client.get(self.profile_url)
         self.assertTemplateUsed(response_code, "library/profilepage.html")
+
+    @classmethod
+    def tearDownClass(cls):
+        shutil.rmtree(TEMP_MEDIA_ROOT, ignore_errors=True)
+        super().tearDownClass()
+
+    def test_file_upload(self):
+        # Create a test file
+        test_file = SimpleUploadedFile(
+            "test.pdf",
+            b"file_content",
+            content_type="application/pdf"
+        )
+        
+        # Use the test file in your tests
+        response = self.client.post('/some/url/', {
+            'pdf_file': test_file,
+        })

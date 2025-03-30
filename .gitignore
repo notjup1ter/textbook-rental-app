@@ -46,3 +46,6 @@ ENV/
 .DS_Store
 Thumbs.db
 
+# Add to .gitignore
+test_media/
+

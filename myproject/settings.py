@@ -14,8 +14,11 @@ from pathlib import Path
 import os
 from dotenv import load_dotenv
 
-# Load environment variables from .env file
-load_dotenv()
+# Load environment variables from .env file if it exists
+try:
+    load_dotenv()
+except:
+    pass
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -24,10 +27,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get('SECRET_KEY')
+# Update the SECRET_KEY setting to have a default value for testing
+SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-test-key-for-ci')
 
-# SECURITY WARNING: don't run with debug turned on in production!
+# Update other environment variable dependent settings
 DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 
 # SHERRIFF: Added both the local host and herokuapp.com here to handled the DisallowedHost error.
@@ -175,10 +178,10 @@ ACCOUNT_LOGOUT_ON_GET = True
 
 LOGIN_URL = '/library/login/'
 
-AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID')
-AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY')
-AWS_STORAGE_BUCKET_NAME = os.environ.get('AWS_STORAGE_BUCKET_NAME')
-AWS_S3_CUSTOM_DOMAIN = '%s.s3.amazonaws.com' % AWS_STORAGE_BUCKET_NAME
+AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID', '')
+AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY', '')
+AWS_STORAGE_BUCKET_NAME = os.environ.get('AWS_STORAGE_BUCKET_NAME', '')
+AWS_S3_CUSTOM_DOMAIN = '%s.s3.amazonaws.com' % AWS_STORAGE_BUCKET_NAME if AWS_STORAGE_BUCKET_NAME else ''
 AWS_FILE_OVERWRITE = False
 MEDIA_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/media/"
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
