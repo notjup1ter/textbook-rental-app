@@ -1,0 +1,68 @@
+{% extends 'library/base.html' %}
+
+{% block title %}{{ collection.title }}{% endblock %}
+
+{% block content %}
+<div class="collection-header" style="margin-bottom: 2rem;">
+    <h1>{{ collection.title }}</h1>
+    <div style="display: flex; align-items: center; margin-bottom: 1rem; color: var(--text-light);">
+        <span>Created by {{ collection.user.username }}</span>
+        {% if collection.user == user %}
+        <span class="badge" style="margin-left: 1rem; background-color: var(--primary-color); color: white; padding: 0.25rem 0.5rem; border-radius: 4px;">Your Collection</span>
+        {% endif %}
+    </div>
+    <p style="font-size: 1.1rem;">{{ collection.description }}</p>
+</div>
+
+<div class="card">
+    <h2 class="card-title">Books in this Collection</h2>
+    
+    {% if books %}
+    <ul class="book-list">
+        {% for book in books %}
+        <li class="book-item">
+            {% if book.cover_image %}
+            <img src="{{ book.cover_image.url }}" alt="{{ book.title }} cover" class="book-cover">
+            {% else %}
+            <div class="book-cover" style="background-color: #e9ecef; display: flex; align-items: center; justify-content: center;">
+                <span style="font-size: 3rem; color: #adb5bd;">📖</span>
+            </div>
+            {% endif %}
+            
+            <div class="book-info">
+                <h3 class="book-title">
+                    <a href="{% url 'book_detail' book.id %}" style="color: inherit; text-decoration: none;">
+                        {{ book.title }}
+                    </a>
+                </h3>
+                <p class="book-author">by {{ book.author }}</p>
+                {% if book.pdf_file %}
+                <div style="margin-top: 0.5rem;">
+                    <a href="{% url 'book_detail' book.id %}" class="btn btn-outline" style="font-size: 0.9rem;">
+                        📄 View Book
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+            
+            {% if collection.user == user %}
+            <div class="book-actions">
+                <form method="post" action="{% url 'remove_from_collection' collection.id book.id %}" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger" onclick="return confirm('Remove this book from the collection?')">Remove</button>
+                </form>
+            </div>
+            {% endif %}
+        </li>
+        {% endfor %}
+    </ul>
+    {% else %}
+    <div class="empty-state">
+        <p>No books in this collection yet.</p>
+        {% if collection.user == user %}
+        <a href="{% url 'explore_library' %}" class="btn btn-primary">Add Books from Library</a>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %} 
