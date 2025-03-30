@@ -3,7 +3,7 @@ from django.contrib.auth.models import Group
 from .models import Book, UserLibrary, Profile, ApprovedLibrarianEmail, Collection
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import logout, login
-from .forms import CustomUserCreationForm, ProfileForm, CollectionForm
+from .forms import CustomUserCreationForm, ProfileForm, CollectionForm, BookForm
 from django.http import FileResponse, Http404
 
 def home(request):
@@ -197,4 +197,24 @@ def book_detail(request, book_id):
         'book': book,
         'user_library_books': user_library_books,
         'user_collections': user_collections,
+    })
+
+@login_required
+def edit_book(request, book_id):
+    if request.user.profile.role != 'librarian':
+        return redirect('home')
+        
+    book = get_object_or_404(Book, id=book_id)
+    
+    if request.method == 'POST':
+        form = BookForm(request.POST, request.FILES, instance=book)
+        if form.is_valid():
+            form.save()
+            return redirect('librarian_dashboard')
+    else:
+        form = BookForm(instance=book)
+    
+    return render(request, 'library/edit_book.html', {
+        'form': form,
+        'book': book
     })

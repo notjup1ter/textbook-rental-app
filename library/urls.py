@@ -30,4 +30,5 @@ urlpatterns = [
     path('collections/<int:collection_id>/remove/<int:book_id>/', views.remove_from_collection, name='remove_from_collection'),
     path('book/<int:book_id>/pdf/', views.view_pdf, name='view_pdf'),
     path('book/<int:book_id>/', views.book_detail, name='book_detail'),
+    path('book/<int:book_id>/edit/', views.edit_book, name='edit_book'),
 ] 

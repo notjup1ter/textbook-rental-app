@@ -53,6 +53,7 @@
                     </div>
                 </div>
                 <div class="book-actions">
+                    <a href="{% url 'edit_book' book.id %}" class="btn btn-outline" style="margin-right: 0.5rem;">Edit</a>
                     <form method="post" style="display: inline;">
                         {% csrf_token %}
                         <input type="hidden" name="book_id" value="{{ book.id }}">
