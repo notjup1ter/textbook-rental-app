@@ -119,20 +119,3 @@ def profile(request):
 
     return render(request, "library/profilepage.html", {'form': form, 'profile': profile})
 
-def toggle_theme(request):
-    if request.user.is_authenticated:
-        profile = request.user.profile
-        if (profile.prefernece == 'light'):
-            profile.theme = 'dark'
-        else:
-            profile.theme = 'light'
-        profile.save()
-    else:
-        cur = request.session.get('theme', 'light')
-        if cur == 'light':
-            changed = 'dark'
-        else:
-            changed = 'light'
-        request.session['theme'] = changed
-
-    return redirect('home')
