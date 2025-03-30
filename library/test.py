@@ -119,3 +119,12 @@ class ViewTest(TestCase):
         self.assertRedirects(response_code, self.my_library_url)
         self.profile.refresh_from_db()
         self.assertEqual(self.profile.role, "patron")
+
+    def test_assign_roles_librarian(self):
+        librarian_user = User.objects.create_user(username='hello', password='world', email='bjayden36@gmail.com')
+        Profile.objects.create(user=librarian_user, role='patron')
+        self.client.login(username="hello", password="world")
+        response_code = self.client.get(self.assign_roles_url)
+        self.assertRedirects(response_code, self.librarian_dashboard_url)
+        profile = Profile.objects.get(user=librarian_user)
+        self.assertEqual(profile.role, "librarian")
