@@ -14,6 +14,8 @@ urlpatterns = [
     path('logout/', views.custom_logout, name='logout'),
     path('redirect/', views.assign_role, name='redirect'),
     path('profile/', views.profile, name='profile'),
+    path('collections/', views.collections, name='collections'),
+    path('collections/<int:collection_id>/', views.collection_detail, name='collection_detail'),
     path('change-password/', 
         login_required(auth_views.PasswordChangeView.as_view(
             template_name='library/change_password.html',
@@ -25,4 +27,9 @@ urlpatterns = [
             template_name='library/change_password_done.html'
         )),
         name='password_change_done'),
+    path('add-to-collection/<int:book_id>/', views.add_to_collection, name='add_to_collection'),
+    path('collections/<int:collection_id>/remove/<int:book_id>/', views.remove_from_collection, name='remove_from_collection'),
+    path('book/<int:book_id>/pdf/', views.view_pdf, name='view_pdf'),
+    path('book/<int:book_id>/', views.book_detail, name='book_detail'),
+    path('book/<int:book_id>/edit/', views.edit_book, name='edit_book'),
 ] 

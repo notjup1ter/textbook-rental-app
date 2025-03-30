@@ -804,4 +804,13 @@ input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focu
 .alert-danger {
   background-color: var(--danger-color);
   color: white;
+}
+
+.button-group {
+  display: flex;
+  gap: 1rem;
+}
+
+.button-group .btn {
+  flex: 1;
 } 
