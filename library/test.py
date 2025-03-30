@@ -1,3 +1,7 @@
+from urllib import response
+
+from allauth.socialaccount.models import SocialApp
+from django.contrib.sites.models import Site
 from django.test import TestCase, Client
 from .models import Book, UserLibrary, Profile, ApprovedLibrarianEmail
 from django.contrib.auth.models import User
@@ -107,3 +111,11 @@ class ViewTest(TestCase):
         self.assertRedirects(response, self.my_library_url)
         self.library.refresh_from_db()
         self.assertNotIn(self.book, self.library.books.all())
+
+    def test_assign_roles_non_librarian(self):
+        self.client.login(username="gamma", password="abc")
+        response_code = self.client.get(self.assign_roles_url)
+        self.assertEqual(response_code.status_code, 302)
+        self.assertRedirects(response_code, self.my_library_url)
+        self.profile.refresh_from_db()
+        self.assertEqual(self.profile.role, "patron")
