@@ -36,10 +36,10 @@
         <h2 class="card-title">Manage Library Collection</h2>
         
         {% if books %}
-        <ul class="book-list">
+        <ul class="book-list" style="display: flex; flex-direction: column; gap: 1rem;">
             {% for book in books %}
-            <li class="book-item" style="flex-direction: row; align-items: center; padding: 1rem; justify-content: space-between;">
-                <div class="book-info" style="flex-direction: row; align-items: center;">
+            <li class="book-item" style="flex-direction: row; align-items: center; padding: 1rem; justify-content: space-between; width: 100%; margin-bottom: 0.5rem; border-bottom: 1px solid #eee;">
+                <div class="book-info" style="flex-direction: row; align-items: center; flex: 1;">
                     {% if book.cover_image %}
                     <img src="{{ book.cover_image.url }}" alt="{{ book.title }} cover" style="width: 60px; height: 90px; object-fit: cover; margin-right: 1rem;">
                     {% else %}
@@ -52,9 +52,9 @@
                         <span class="book-author">by {{ book.author }}</span>
                     </div>
                 </div>
-                <div class="book-actions">
-                    <a href="{% url 'edit_book' book.id %}" class="btn btn-outline" style="margin-right: 0.5rem;">Edit</a>
-                    <form method="post" style="display: inline;">
+                <div class="book-actions" style="display: flex; align-items: center; gap: 0.5rem; margin-left: 1rem;">
+                    <a href="{% url 'edit_book' book.id %}" class="btn btn-outline">Edit</a>
+                    <form method="post" style="display: inline; margin: 0;">
                         {% csrf_token %}
                         <input type="hidden" name="book_id" value="{{ book.id }}">
                         <input type="hidden" name="delete_book" value="true">
