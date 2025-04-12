@@ -48,3 +48,16 @@ class Collection(models.Model):
 
     def __str__(self):
         return self.title
+
+class Rental(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    book = models.ForeignKey(Book, on_delete=models.CASCADE)
+    start_date = models.DateField(auto_now_add=True)
+    end_date = models.DateField()
+    active = models.BooleanField(default=True)
+
+class FakeInvoice(models.Model):
+    rental = models.ForeignKey(Rental, on_delete=models.CASCADE)
+    amount = models.DecimalField(decimal_places=2, max_digits=6)
+    issued_at = models.DateTimeField(auto_now_add=True)
+    paid = models.BooleanField(default=True)
