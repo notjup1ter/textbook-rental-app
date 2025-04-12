@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.utils import timezone
 
 class Book(models.Model):
     title = models.CharField(max_length=200)
@@ -61,3 +62,13 @@ class FakeInvoice(models.Model):
     amount = models.DecimalField(decimal_places=2, max_digits=6)
     issued_at = models.DateTimeField(auto_now_add=True)
     paid = models.BooleanField(default=True)
+
+class Notification(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    message = models.CharField(max_length=255)
+    link = models.CharField(max_length=200, blank=True, help_text="URL or named route to link the notification to")
+    created_at = models.DateTimeField(auto_now_add=True)
+    read = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f"{self.user.username} - {self.message}"
