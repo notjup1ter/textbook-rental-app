@@ -11,6 +11,36 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{% static 'library/css/style.css' %}">
     <link rel="icon" href="{% static 'library/images/cs.ico' %}" type="image/x-icon">
+
+    
+    {% if theme == "dark" %}
+    <style>
+      body {
+        background-color: #121212;
+        color: #e0e0e0;
+      }
+      .feature-card {
+        background-color: #2f3e87; /* A stronger/darker blue */
+        color: #e0e0e0;
+      }
+      .feature-card .feature-title {
+        color: #ffffff; /* Make sure the text is visible */
+      }
+      /* You can also tweak the .card background if needed */
+      .card {
+        background-color: #2e2e2e;
+        color: #ffffff;
+      }
+    </style>
+    {% else %}
+    <style>
+      body {
+        background-color: #ffffff;
+        color: #000000;
+      }
+      /* more light mode styles */
+    </style>
+    {% endif %}
   </head>
   <body>
     <div class="page-wrapper">
@@ -23,7 +53,8 @@
                   </a>
               </div>
               <ul class="nav-links">
-                  <li> <a href="{% url 'toggle_theme' %}"> Switch to {% if theme == 'dark' %}Light {% else %}Dark{% endif %} Mode </a> </li>
+                  {% block nav_toggle %}{% endblock %}
+
                   <li><a href="{% url 'home' %}">Home</a></li>
                   <li><a href="{% url 'explore_library' %}">Explore</a></li>
                   <li><a href="{% url 'my_library' %}">My Library</a></li>

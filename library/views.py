@@ -9,6 +9,15 @@ from django.utils import timezone
 from datetime import timedelta
 from decimal import Decimal
 from django.contrib import messages
+from django.db.models import Q
+
+#predefined price ranges
+PRICE_RANGES = [
+    ('under_10', 'Under $10'),
+    ('10_to_50', '$10 - $50'),
+    ('51_to_100', '$51 - $100'),
+    ('over_100', 'Over $100'),
+]
 
 def home(request):
     if request.user.is_authenticated:
@@ -19,6 +28,31 @@ def home(request):
 
 def explore_library(request):
     books = Book.objects.all()
+    query  = request.GET.get('q')
+    selected_conditions = request.GET.getlist('conditions')
+    selected_price_ranges = request.GET.getlist('price_ranges')
+    
+    if query:
+        books = Book.objects.filter(
+            Q(title__icontains=query) | Q(author__icontains=query)
+        )
+    if selected_conditions:
+        books = books.filter(condition__in=selected_conditions)
+    
+    # Filter by price range
+    if selected_price_ranges:
+        price_Q = Q()
+        for price_range in selected_price_ranges:
+            if price_range == 'under_10':
+                price_Q |= Q(rental_price__lt=10.00)
+            elif price_range == '10_to_50':
+                price_Q |= Q(rental_price__gte=10, rental_price__lte=50)
+            elif price_range == '51_to_100':
+                price_Q |= Q(rental_price__gt=50, rental_price__lte=100)
+            elif price_range == 'over_100':
+                price_Q |= Q(rental_price__gt=100)
+        books = books.filter(price_Q)
+    
     user_library_books = []
     user_collections = []
     
@@ -39,7 +73,12 @@ def explore_library(request):
     return render(request, 'library/explore_library.html', {
         'books': books,
         'user_library_books': user_library_books,
-        'user_collections': user_collections
+        'user_collections': user_collections,
+        'query': query,
+        'conditions': Book.CONDITION_CHOICES,
+        'selected_conditions': selected_conditions,
+        'price_ranges': PRICE_RANGES,
+        'selected_price_ranges': selected_price_ranges,
     })
 
 @login_required(login_url='/library/login/')
