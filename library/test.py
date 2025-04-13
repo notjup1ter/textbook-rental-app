@@ -1,5 +1,9 @@
+from datetime import timedelta
 from urllib import response
 
+import freezegun
+from django.utils import timezone
+from freezegun import freeze_time
 from allauth.socialaccount.models import SocialApp
 from django.contrib.sites.models import Site
 from django.test import TestCase, Client, override_settings
@@ -83,8 +87,29 @@ class CollectionTest(TestCase):
     def test_collection_user(self):
         self.assertEqual(self.collection.user, self.user)
 
+class RentalTest(TestCase):
+    def setUp(self):
+        self.user = User.objects.create(username="hahah", password="loll")
+        self.book = Book.objects.create(title="abba", author="kkun")
 
+    def test_rental_str(self):
+        re = Rental.objects.create(book=self.book, user=self.user, end_date=timezone.now(), status="expired")
+        self.assertEqual(str(re), f"{re.user.username} - {re.book.title} ({re.status})")
 
+    @freeze_time("2025-01-01 12:00:00")
+    def test_days_remaining(self):
+        re = Rental.objects.create(book=self.book, user=self.user, end_date=timezone.now() + timedelta(hours=2))
+        self.assertEqual(re.status, "pending")
+        self.assertEqual(re.days_remaining(), 120)
+        self.assertFalse(re.is_active())
+
+    @freeze_time("2025-01-01 12:00:00")
+    def test_is_active(self):
+        re = Rental.objects.create(book=self.book, user=self.user, end_date=timezone.now() + timedelta(minutes=30), status="active")
+        self.assertTrue(re.is_active())
+        with freeze_time("2025-01-01 13:00:00"):
+            self.assertEqual(re.days_remaining(), 0)
+            self.assertFalse(re.is_active())
 
 
 class ViewTest(TestCase):
