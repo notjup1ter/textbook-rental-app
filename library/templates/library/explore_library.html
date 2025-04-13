@@ -14,7 +14,7 @@
                 style="display: inline-block; width: calc(100% - 120px); margin-right: 10px; margin-bottom: 10px;"
                 name="q" 
                 class="form-control me-2" 
-                placeholder="Search by title or author (blank search to get all books again)..." 
+                placeholder="Search by title or author..." 
                 value="{{ query|default:'' }}"
             >
             <div style="display: flex; align-items: center; margin-bottom: 10px;">
@@ -42,6 +42,7 @@
                     {% endfor %}
                 </div>
             </div>
+            <p> Note: make sure to clear your search and filters before pressing 'submit' to see all books again!</p>
             <button class="btn btn-primary" type="submit">Search</button>
         </form>
     </div>

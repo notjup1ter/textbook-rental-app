@@ -324,9 +324,10 @@ def toggle_theme(request):
         profile = request.user.profile
         if (profile.preference == 'light'):
             profile.preference = 'dark'
-
+            profile.theme = 'dark'
         else:
             profile.preference = 'light'
+            profile.theme = 'light'
         profile.save()
     else:
         cur = request.session.get('theme', 'light')
