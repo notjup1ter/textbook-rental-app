@@ -9,6 +9,7 @@ from django.utils import timezone
 from datetime import timedelta
 from decimal import Decimal
 from django.contrib import messages
+from django.db.models import Q
 
 def home(request):
     if request.user.is_authenticated:
@@ -18,7 +19,13 @@ def home(request):
     return render(request, 'library/home.html', {'theme': theme})
 
 def explore_library(request):
-    books = Book.objects.all()
+    query  = request.GET.get('q')
+    if query:
+        books = Book.objects.filter(
+            Q(title__icontains=query) | Q(author__icontains=query)
+        )
+    else:
+        books = Book.objects.all()
     user_library_books = []
     user_collections = []
     
