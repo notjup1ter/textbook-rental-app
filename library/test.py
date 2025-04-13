@@ -1,7 +1,5 @@
 from datetime import timedelta
 from urllib import response
-
-import freezegun
 from django.utils import timezone
 from freezegun import freeze_time
 from allauth.socialaccount.models import SocialApp

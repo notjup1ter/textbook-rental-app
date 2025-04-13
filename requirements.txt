@@ -29,3 +29,4 @@ sqlparse
 typing_extensions
 urllib3
 whitenoise
+freezegun
