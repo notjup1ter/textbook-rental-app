@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.models import Group
-from .models import Book, UserLibrary, Profile, ApprovedLibrarianEmail, Collection, Rental
+from .models import Book, UserLibrary, Profile, ApprovedLibrarianEmail, Collection, Rental, Notification
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import logout, login
 from .forms import CustomUserCreationForm, ProfileForm, CollectionForm, BookForm, RentalPaymentForm
@@ -10,6 +10,7 @@ from datetime import timedelta
 from decimal import Decimal
 from django.contrib import messages
 from django.db.models import Q
+from django.urls import reverse
 
 #predefined price ranges
 PRICE_RANGES = [
@@ -84,22 +85,54 @@ def explore_library(request):
 @login_required(login_url='/library/login/')
 def my_library(request):
     user_library, created = UserLibrary.objects.get_or_create(user=request.user)
+    current_time = timezone.now()
     
     if request.method == 'POST':
         book_id = request.POST.get('book_id')
         if book_id:
-            book = get_object_or_404(Book, id=book_id)
-            user_library.books.remove(book)
-            Rental.objects.filter(
-                user=request.user,
-                book=book,
-                status='active'
-            ).update(status='cancelled')
-            messages.success(request, f"'{book.title}' has been removed from your library.")
+            try:
+                book = get_object_or_404(Book, id=book_id)
+                # Cancel any active rentals for this book
+                Rental.objects.filter(
+                    user=request.user,
+                    book=book,
+                    status='active'
+                ).update(status='cancelled')
+                # Remove book from library
+                user_library.books.remove(book)
+                # Create notification
+                Notification.objects.create(
+                    user=request.user,
+                    message=f"'{book.title}' has been removed from your library",
+                    link=reverse('explore_library')
+                )
+                messages.success(request, f"'{book.title}' has been removed from your library.")
+            except Exception as e:
+                messages.error(request, f"Error removing book: {str(e)}")
             return redirect('my_library')
     
+    # Check for rentals about to expire (less than 5 minutes remaining)
+    nearly_expired_rentals = Rental.objects.filter(
+        user=request.user,
+        status='active',
+        end_date__gt=current_time,
+        end_date__lte=current_time + timedelta(minutes=5)
+    )
+    
+    for rental in nearly_expired_rentals:
+        # Create expiration warning notification if not already created
+        if not Notification.objects.filter(
+            user=request.user,
+            message__contains=f"Your rental of {rental.book.title} will expire soon",
+            created_at__gte=current_time - timedelta(minutes=5)
+        ).exists():
+            Notification.objects.create(
+                user=request.user,
+                message=f"Your rental of {rental.book.title} will expire soon!",
+                link=reverse('my_library')
+            )
+    
     # Check for expired rentals
-    current_time = timezone.now()
     expired_rentals = Rental.objects.filter(
         user=request.user,
         status='active',
@@ -110,6 +143,13 @@ def my_library(request):
         rental.status = 'expired'
         rental.save()
         user_library.books.remove(rental.book)
+        
+        # Create expiration notification
+        Notification.objects.create(
+            user=request.user,
+            message=f"Your rental of {rental.book.title} has expired",
+            link=reverse('explore_library')
+        )
     
     # Get active rentals
     active_rentals = Rental.objects.filter(
@@ -379,9 +419,22 @@ def rent_book(request, book_id):
                 user_library, _ = UserLibrary.objects.get_or_create(user=request.user)
                 user_library.books.add(book)
                 
+                # Create success notification
+                Notification.objects.create(
+                    user=request.user,
+                    message=f"Successfully rented {book.title} for {book.rental_duration_days} minutes",
+                    link=reverse('my_library')
+                )
+                
                 messages.success(request, f"Successfully rented {book.title} for {book.rental_duration_days} minutes!")
                 return redirect('my_library')
             else:
+                # Create failure notification
+                Notification.objects.create(
+                    user=request.user,
+                    message=f"Payment failed for {book.title}. Please try again.",
+                    link=reverse('rent_book', args=[book.id])
+                )
                 messages.error(request, "Payment failed. Please try again.")
     else:
         form = RentalPaymentForm()

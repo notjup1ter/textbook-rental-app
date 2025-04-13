@@ -813,4 +813,55 @@ input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focu
 
 .button-group .btn {
   flex: 1;
+}
+
+/* Toast Notification Styling */
+.toast-container {
+    position: fixed;
+    top: 20px;          /* Changed from bottom to top */
+    right: 20px;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    pointer-events: none;
+}
+
+.toast-message {
+    padding: 1rem 2rem;
+    border-radius: 8px;
+    background-color: white;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    opacity: 0;
+    transform: translateX(100%);  /* Slide in from right */
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    min-width: 300px;
+    max-width: 400px;
+    pointer-events: auto;
+    margin-bottom: 0.5rem;
+}
+
+.toast-message.show {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.toast-message.success {
+    background-color: #28a745;
+    color: white;
+}
+
+.toast-message.error {
+    background-color: #dc3545;
+    color: white;
+}
+
+.toast-message.warning {
+    background-color: #ffc107;
+    color: #000;
+}
+
+.toast-message.info {
+    background-color: #17a2b8;
+    color: white;
 } 
