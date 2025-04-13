@@ -4,12 +4,21 @@ from django.utils import timezone
 from datetime import datetime, timedelta
 
 class Book(models.Model):
+    CONDITION_CHOICES = (
+        ('new', 'New'),
+        ('excellent', 'Excellent'),
+        ('good', 'Good'),
+        ('fair', 'Fair'),
+        ('poor', 'Poor')
+    )
+    
     title = models.CharField(max_length=200)
     author = models.CharField(max_length=100)
     cover_image = models.ImageField(upload_to='book_covers/', blank=True, null=True)
     pdf_file = models.FileField(upload_to='book_pdfs/', blank=True, null=True)
     rental_price = models.DecimalField(max_digits=6, decimal_places=2, default=9.99)
     rental_duration_days = models.IntegerField(default=30)
+    condition = models.CharField(max_length=10, choices=CONDITION_CHOICES, default='good')
 
     def __str__(self):
         return self.title
