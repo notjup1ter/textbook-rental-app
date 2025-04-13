@@ -11,6 +11,14 @@ from decimal import Decimal
 from django.contrib import messages
 from django.db.models import Q
 
+#predefined price ranges
+PRICE_RANGES = [
+    ('under_10', 'Under $10'),
+    ('10_to_50', '$10 - $50'),
+    ('51_to_100', '$51 - $100'),
+    ('over_100', 'Over $100'),
+]
+
 def home(request):
     if request.user.is_authenticated:
         theme = request.user.profile.preference
@@ -19,30 +27,32 @@ def home(request):
     return render(request, 'library/home.html', {'theme': theme})
 
 def explore_library(request):
-    query  = request.GET.get('q')
-    conditions = request.GET.getlist('condition')
-    price_ranges = request.GET.getlist('price')
-
     books = Book.objects.all()
+    query  = request.GET.get('q')
+    selected_conditions = request.GET.getlist('conditions')
+    selected_price_ranges = request.GET.getlist('price_ranges')
+    
     if query:
 
         books = Book.objects.filter(
             Q(title__icontains=query) | Q(author__icontains=query)
         )
-    if conditions:
-        books = books.filter(condition__in=conditions)
+    if selected_conditions:
+        books = books.filter(condition__in=selected_conditions)
     
-    if price_ranges:
+    # Filter by price range
+    if selected_price_ranges:
         price_Q = Q()
-        if 'under_10' in price_ranges:
-            price_Q |= Q(rental_price__lt=Decimal('10.00'))
-        if '10_to_50' in price_ranges:
-            price_Q |= Q(rental_price__gte=Decimal('10.00'), rental_price__lt=Decimal('50.00'))
-        if '50_to_100' in price_ranges:
-            price_Q |= Q(rental_price__gte=Decimal('50.00'), rental_price__lt=Decimal('100.00'))
-        if 'over_100' in price_ranges:
-            price_Q |= Q(rental_price__gte=Decimal('100.00'))
-        books = books.filter(price_Q)        
+        for price_range in selected_price_ranges:
+            if price_range == 'under_10':
+                price_Q |= Q(rental_price__lt=10.00)
+            elif price_range == '10_to_50':
+                price_Q |= Q(rental_price__gte=10, rental_price__lte=50)
+            elif price_range == '51_to_100':
+                price_Q |= Q(rental_price__gt=50, rental_price__lte=100)
+            elif price_range == 'over_100':
+                price_Q |= Q(rental_price__gt=100)
+        books = books.filter(price_Q)
     
     user_library_books = []
     user_collections = []
@@ -66,8 +76,10 @@ def explore_library(request):
         'user_library_books': user_library_books,
         'user_collections': user_collections,
         'query': query,
-        'conditions': conditions,
-        'price_ranges': price_ranges,
+        'conditions': Book.CONDITION_CHOICES,
+        'selected_conditions': selected_conditions,
+        'price_ranges': PRICE_RANGES,
+        'selected_price_ranges': selected_price_ranges,
     })
 
 @login_required(login_url='/library/login/')

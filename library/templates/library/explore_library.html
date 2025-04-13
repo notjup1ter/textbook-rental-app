@@ -8,15 +8,40 @@
 <div class="card">
     <p>Browse through our collection of textbooks and add them to your personal library.</p>
     <div class="container">
-        <form method="get" role="search">
+        <form method="get" class="role="search">
             <input
                 type="text" 
-                style="display: inline-block; width: calc(100% - 120px); margin-right: 10px;"
+                style="display: inline-block; width: calc(100% - 120px); margin-right: 10px; margin-bottom: 10px;"
                 name="q" 
                 class="form-control me-2" 
                 placeholder="Search by title or author (blank search to get all books again)..." 
                 value="{{ query|default:'' }}"
             >
+            <div style="display: flex; align-items: center; margin-bottom: 10px;">
+                <strong style="margin-right: 10px;">Condition |</strong>
+                <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+                    {% for value, label in conditions %}
+                        <div class="form-check" style="display: flex; align-items: center;">
+                            <input class="form-check-input" type="checkbox" name="conditions" value="{{ value }}"
+                                {% if value in selected_conditions %}checked{% endif %}>
+                            <label class="form-check-label" style="margin-left: 5px;">{{ label }}</label>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div style="display: flex; align-items: center; margin-bottom: 10px;">
+                <strong style="margin-right: 10px;">Price Range |</strong>
+                <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+                    {% for value, label in price_ranges %}
+                        <div class="form-check" style="display: flex; align-items: center;">
+                            <input class="form-check-input" type="checkbox" name="price_ranges" value="{{ value }}"
+                                {% if value in selected_price_ranges %}checked{% endif %}>
+                            <label class="form-check-label" style="margin-left: 5px;">{{ label }}</label>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
             <button class="btn btn-primary" type="submit">Search</button>
         </form>
     </div>
