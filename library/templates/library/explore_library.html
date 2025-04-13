@@ -40,24 +40,26 @@
                 {% if book in user_library_books %}
                     <span class="in-library">✓ In Your Library</span>
                 {% else %}
-                    <form method="post">
-                        {% csrf_token %}
-                        <input type="hidden" name="book_id" value="{{ book.id }}">
-                        <button type="submit" class="btn btn-primary">Add to Library</button>
-                    </form>
+                    <div class="book-actions">
+                        <p class="rental-price">${{ book.rental_price }} for {{ book.rental_duration_days }} minutes</p>
+                        <a href="{% url 'rent_book' book.id %}" class="btn btn-primary">Rent Book</a>
+                    </div>
                 {% endif %}
                 
                 {% if user.is_authenticated %}
                 <div class="dropdown" style="margin-top: 0.5rem;">
                     <form method="post" action="{% url 'add_to_collection' book.id %}">
                         {% csrf_token %}
-                        <select name="collection_id" class="form-control" style="margin-bottom: 0.5rem;">
+                        <select name="collection_id" class="form-control" style="margin-bottom: 0.5rem;" required>
                             <option value="">Add to Collection...</option>
                             {% for collection in user_collections %}
                             <option value="{{ collection.id }}">{{ collection.title }}</option>
                             {% endfor %}
                         </select>
-                        <button type="submit" class="btn btn-outline" style="width: 100%;">Add to Collection</button>
+                        <button type="submit" class="btn btn-outline" style="width: 100%;" 
+                                onclick="return this.form.collection_id.value !== ''">
+                            Add to Collection
+                        </button>
                     </form>
                 </div>
                 {% endif %}

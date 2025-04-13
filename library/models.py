@@ -1,12 +1,15 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
+from datetime import datetime, timedelta
 
 class Book(models.Model):
     title = models.CharField(max_length=200)
     author = models.CharField(max_length=100)
     cover_image = models.ImageField(upload_to='book_covers/', blank=True, null=True)
     pdf_file = models.FileField(upload_to='book_pdfs/', blank=True, null=True)
+    rental_price = models.DecimalField(max_digits=6, decimal_places=2, default=9.99)
+    rental_duration_days = models.IntegerField(default=30)
 
     def __str__(self):
         return self.title
@@ -51,11 +54,36 @@ class Collection(models.Model):
         return self.title
 
 class Rental(models.Model):
+    RENTAL_STATUS = (
+        ('pending', 'Pending Payment'),
+        ('active', 'Active'),
+        ('expired', 'Expired'),
+        ('cancelled', 'Cancelled')
+    )
+    
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     book = models.ForeignKey(Book, on_delete=models.CASCADE)
-    start_date = models.DateField(auto_now_add=True)
-    end_date = models.DateField()
-    active = models.BooleanField(default=True)
+    start_date = models.DateTimeField(auto_now_add=True)
+    end_date = models.DateTimeField()
+    status = models.CharField(max_length=10, choices=RENTAL_STATUS, default='pending')
+    payment_id = models.CharField(max_length=100, blank=True, null=True)
+
+    def days_remaining(self):
+        if not self.end_date:
+            return 0
+        now = timezone.now()
+        if isinstance(self.end_date, str):
+            end_date = timezone.datetime.fromisoformat(self.end_date)
+        else:
+            end_date = self.end_date
+        remaining = (end_date - now).total_seconds() / 60  # Convert to minutes
+        return max(0, int(remaining))
+
+    def is_active(self):
+        return self.status == 'active' and self.days_remaining() > 0
+
+    def __str__(self):
+        return f"{self.user.username} - {self.book.title} ({self.status})"
 
 class FakeInvoice(models.Model):
     rental = models.ForeignKey(Rental, on_delete=models.CASCADE)

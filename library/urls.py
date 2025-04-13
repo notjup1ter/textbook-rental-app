@@ -32,4 +32,6 @@ urlpatterns = [
     path('book/<int:book_id>/pdf/', views.view_pdf, name='view_pdf'),
     path('book/<int:book_id>/', views.book_detail, name='book_detail'),
     path('book/<int:book_id>/edit/', views.edit_book, name='edit_book'),
+    path('book/<int:book_id>/rent/', views.rent_book, name='rent_book'),
+    path('my-rentals/', views.my_rentals, name='my_rentals'),
 ] 

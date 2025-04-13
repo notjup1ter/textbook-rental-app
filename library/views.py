@@ -1,10 +1,14 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.models import Group
-from .models import Book, UserLibrary, Profile, ApprovedLibrarianEmail, Collection
+from .models import Book, UserLibrary, Profile, ApprovedLibrarianEmail, Collection, Rental
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import logout, login
-from .forms import CustomUserCreationForm, ProfileForm, CollectionForm, BookForm
+from .forms import CustomUserCreationForm, ProfileForm, CollectionForm, BookForm, RentalPaymentForm
 from django.http import FileResponse, Http404
+from django.utils import timezone
+from datetime import timedelta
+from decimal import Decimal
+from django.contrib import messages
 
 def home(request):
     if request.user.is_authenticated:
@@ -41,13 +45,52 @@ def explore_library(request):
 @login_required(login_url='/library/login/')
 def my_library(request):
     user_library, created = UserLibrary.objects.get_or_create(user=request.user)
+    
     if request.method == 'POST':
         book_id = request.POST.get('book_id')
-        book = Book.objects.get(id=book_id)
-        if request.user.is_authenticated:
+        if book_id:
+            book = get_object_or_404(Book, id=book_id)
             user_library.books.remove(book)
+            Rental.objects.filter(
+                user=request.user,
+                book=book,
+                status='active'
+            ).update(status='cancelled')
+            messages.success(request, f"'{book.title}' has been removed from your library.")
             return redirect('my_library')
-    return render(request, 'library/my_library.html', {'books': user_library.books.all()})
+    
+    # Check for expired rentals
+    current_time = timezone.now()
+    expired_rentals = Rental.objects.filter(
+        user=request.user,
+        status='active',
+        end_date__lt=current_time
+    )
+    
+    for rental in expired_rentals:
+        rental.status = 'expired'
+        rental.save()
+        user_library.books.remove(rental.book)
+    
+    # Get active rentals
+    active_rentals = Rental.objects.filter(
+        user=request.user,
+        status='active',
+        end_date__gte=current_time
+    )
+    
+    # Create a dictionary of book_id: minutes_remaining
+    rental_times = {}
+    for rental in active_rentals:
+        try:
+            rental_times[rental.book.id] = rental.days_remaining()
+        except (ValueError, TypeError):
+            rental_times[rental.book.id] = 0
+    
+    return render(request, 'library/my_library.html', {
+        'books': user_library.books.all(),
+        'rental_times': rental_times
+    })
 
 def custom_logout(request):
     logout(request)
@@ -152,6 +195,9 @@ def collections(request):
 def add_to_collection(request, book_id):
     if request.method == 'POST':
         collection_id = request.POST.get('collection_id')
+        if not collection_id:  # If no collection was selected
+            return redirect('explore_library')  # Redirect back without doing anything
+            
         collection = get_object_or_404(Collection, id=collection_id, user=request.user)
         book = get_object_or_404(Book, id=book_id)
         collection.books.add(book)
@@ -240,3 +286,82 @@ def toggle_theme(request):
         request.session['theme'] = changed
 
     return redirect('home')
+
+def process_mock_payment(amount, card_number):
+    """Mock payment processing - always succeeds if card number ends in even digit"""
+    return card_number[-1] in '02468'
+
+@login_required
+def rent_book(request, book_id):
+    book = get_object_or_404(Book, id=book_id)
+    current_time = timezone.now()
+    
+    # Check for existing rental
+    existing_rental = Rental.objects.filter(
+        user=request.user,
+        book=book,
+        status='active',
+        end_date__gte=current_time
+    ).first()
+    
+    if existing_rental:
+        messages.warning(request, "You already have an active rental for this book.")
+        return redirect('book_detail', book_id=book_id)
+
+    if request.method == 'POST':
+        form = RentalPaymentForm(request.POST)
+        if form.is_valid():
+            payment_successful = process_mock_payment(book.rental_price, form.cleaned_data['card_number'])
+            
+            if payment_successful:
+                # Create rental
+                rental = Rental.objects.create(
+                    user=request.user,
+                    book=book,
+                    start_date=current_time,
+                    end_date=current_time + timedelta(minutes=book.rental_duration_days),
+                    status='active',
+                    payment_id=f"MOCK_{current_time.timestamp()}"
+                )
+                
+                # Add book to library
+                user_library, _ = UserLibrary.objects.get_or_create(user=request.user)
+                user_library.books.add(book)
+                
+                messages.success(request, f"Successfully rented {book.title} for {book.rental_duration_days} minutes!")
+                return redirect('my_library')
+            else:
+                messages.error(request, "Payment failed. Please try again.")
+    else:
+        form = RentalPaymentForm()
+    
+    return render(request, 'library/rent_book.html', {
+        'form': form,
+        'book': book
+    })
+
+@login_required
+def my_rentals(request):
+    active_rentals = Rental.objects.filter(
+        user=request.user,
+        status='active',
+        end_date__gte=timezone.now().date()
+    )
+    expired_rentals = Rental.objects.filter(
+        user=request.user,
+        status='active',
+        end_date__lt=timezone.now().date()
+    )
+    
+    # Update expired rentals
+    for rental in expired_rentals:
+        rental.status = 'expired'
+        rental.save()
+        # Remove book from user's library
+        user_library = UserLibrary.objects.get(user=request.user)
+        user_library.books.remove(rental.book)
+    
+    return render(request, 'library/my_rentals.html', {
+        'active_rentals': active_rentals,
+        'expired_rentals': expired_rentals
+    })
