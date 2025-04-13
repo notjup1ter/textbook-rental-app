@@ -33,7 +33,6 @@ def explore_library(request):
     selected_price_ranges = request.GET.getlist('price_ranges')
     
     if query:
-
         books = Book.objects.filter(
             Q(title__icontains=query) | Q(author__icontains=query)
         )
@@ -323,10 +322,11 @@ def edit_book(request, book_id):
 def toggle_theme(request):
     if request.user.is_authenticated:
         profile = request.user.profile
-        if (profile.prefernece == 'light'):
-            profile.theme = 'dark'
+        if (profile.preference == 'light'):
+            profile.preference = 'dark'
+
         else:
-            profile.theme = 'light'
+            profile.preference = 'light'
         profile.save()
     else:
         cur = request.session.get('theme', 'light')
