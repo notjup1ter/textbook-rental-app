@@ -3,7 +3,7 @@ from urllib import response
 from allauth.socialaccount.models import SocialApp
 from django.contrib.sites.models import Site
 from django.test import TestCase, Client, override_settings
-from .models import Book, UserLibrary, Profile, ApprovedLibrarianEmail
+from .models import Book, UserLibrary, Profile, ApprovedLibrarianEmail, Collection, Rental
 from django.contrib.auth.models import User
 from django.urls import reverse
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -70,6 +70,21 @@ class ApprovedLibrarianEmailTest(TestCase):
 
     def test_profile_str(self):
         self.assertEqual(str(self.email), "hello.com")
+
+class CollectionTest(TestCase):
+    def setUp(self):
+        self.user = User.objects.create(username="allaa", password="beea")
+        self.book = Book.objects.create(title="cjfdcc", author="ddfjdkslad")
+        self.collection = Collection.objects.create(title="My best collection", description="good books", user=self.user)
+
+    def test_collection_str(self):
+        self.assertEqual(str(self.collection), "My best collection")
+
+    def test_collection_user(self):
+        self.assertEqual(self.collection.user, self.user)
+
+
+
 
 
 class ViewTest(TestCase):
