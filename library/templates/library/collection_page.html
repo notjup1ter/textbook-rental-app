@@ -69,10 +69,11 @@
                     {% endif %}
                 </div>
                 
-                <div class="book-actions">
+                <div class="book-actions" style="display: flex; flex-direction: column; gap: 0.5rem;">
                     {% if collection.user == user %}
                         <span class="in-library">✓ Your Collection</span>
                     {% endif %}
+                    <a href="{% url 'collection_detail' collection.id %}" class="btn btn-primary" style="width: 100%;">View Collection</a>
                 </div>
             </li>
             {% endfor %}
