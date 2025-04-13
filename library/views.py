@@ -252,11 +252,19 @@ def add_to_collection(request, book_id):
 @login_required
 def collection_detail(request, collection_id):
     collection = get_object_or_404(Collection, id=collection_id)
-    books = collection.books.all()
+    
+    # Get user's library books
+    user_library, created = UserLibrary.objects.get_or_create(user=request.user)
+    user_library_books = user_library.books.all()
+    
+    # Filter collection books to only show those in user's library
+    viewable_books = collection.books.filter(id__in=user_library_books)
+    non_viewable_books = collection.books.exclude(id__in=user_library_books)
     
     return render(request, 'library/collection_detail.html', {
         'collection': collection,
-        'books': books,
+        'viewable_books': viewable_books,
+        'non_viewable_books': non_viewable_books,
     })
 
 @login_required
@@ -322,22 +330,13 @@ def edit_book(request, book_id):
 def toggle_theme(request):
     if request.user.is_authenticated:
         profile = request.user.profile
-        if (profile.preference == 'light'):
-            profile.preference = 'dark'
-            profile.theme = 'dark'
-        else:
-            profile.preference = 'light'
-            profile.theme = 'light'
+        profile.preference = 'dark' if profile.preference == 'light' else 'light'
         profile.save()
     else:
-        cur = request.session.get('theme', 'light')
-        if cur == 'light':
-            changed = 'dark'
-        else:
-            changed = 'light'
-        request.session['theme'] = changed
+        current_theme = request.session.get('theme', 'light')
+        request.session['theme'] = 'dark' if current_theme == 'light' else 'light'
 
-    return redirect('home')
+    return redirect(request.META.get('HTTP_REFERER', 'home'))
 
 def process_mock_payment(amount, card_number):
     """Mock payment processing - always succeeds if card number ends in even digit"""
@@ -417,3 +416,12 @@ def my_rentals(request):
         'active_rentals': active_rentals,
         'expired_rentals': expired_rentals
     })
+
+@login_required
+def delete_collection(request, collection_id):
+    collection = get_object_or_404(Collection, id=collection_id, user=request.user)
+    if request.method == 'POST':
+        collection.delete()
+        messages.success(request, f"Collection '{collection.title}' has been deleted.")
+        return redirect('collections')
+    return redirect('collection_detail', collection_id=collection_id)

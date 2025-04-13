@@ -26,7 +26,7 @@
                 {% endif %}
                 
                 {% if user.is_authenticated %}
-                <div class="dropdown" style="margin-top: 0.5rem;">
+                <div class="dropdown" style="margin-top: 0.5rem; width: 200%;">
                     <form method="post" action="{% url 'add_to_collection' book.id %}">
                         {% csrf_token %}
                         <select name="collection_id" class="form-control" style="margin-bottom: 0.5rem;">
