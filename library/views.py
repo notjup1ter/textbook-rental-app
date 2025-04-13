@@ -20,12 +20,30 @@ def home(request):
 
 def explore_library(request):
     query  = request.GET.get('q')
+    conditions = request.GET.getlist('condition')
+    price_ranges = request.GET.getlist('price')
+
+    books = Book.objects.all()
     if query:
+
         books = Book.objects.filter(
             Q(title__icontains=query) | Q(author__icontains=query)
         )
-    else:
-        books = Book.objects.all()
+    if conditions:
+        books = books.filter(condition__in=conditions)
+    
+    if price_ranges:
+        price_Q = Q()
+        if 'under_10' in price_ranges:
+            price_Q |= Q(rental_price__lt=Decimal('10.00'))
+        if '10_to_50' in price_ranges:
+            price_Q |= Q(rental_price__gte=Decimal('10.00'), rental_price__lt=Decimal('50.00'))
+        if '50_to_100' in price_ranges:
+            price_Q |= Q(rental_price__gte=Decimal('50.00'), rental_price__lt=Decimal('100.00'))
+        if 'over_100' in price_ranges:
+            price_Q |= Q(rental_price__gte=Decimal('100.00'))
+        books = books.filter(price_Q)        
+    
     user_library_books = []
     user_collections = []
     
@@ -46,7 +64,10 @@ def explore_library(request):
     return render(request, 'library/explore_library.html', {
         'books': books,
         'user_library_books': user_library_books,
-        'user_collections': user_collections
+        'user_collections': user_collections,
+        'query': query,
+        'conditions': conditions,
+        'price_ranges': price_ranges,
     })
 
 @login_required(login_url='/library/login/')
