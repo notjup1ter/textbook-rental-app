@@ -28,6 +28,24 @@
                 <input type="file" id="pdf_file" name="pdf_file" class="form-control" accept="application/pdf">
                 <small style="display: block; margin-top: 0.5rem; color: var(--text-light);">Upload the book's PDF file</small>
             </div>
+            <div class="form-group">
+                <label for="rental_price">Rental Price ($)</label>
+                <input type="number" id="rental_price" name="rental_price" class="form-control" step="0.01" min="0" value="9.99" required>
+            </div>
+            <div class="form-group">
+                <label for="rental_duration_days">Rental Duration (minutes)</label>
+                <input type="number" id="rental_duration_days" name="rental_duration_days" class="form-control" min="1" value="30" required>
+            </div>
+            <div class="form-group">
+                <label for="condition">Book Condition</label>
+                <select id="condition" name="condition" class="form-control" required>
+                    <option value="new">New</option>
+                    <option value="excellent">Excellent</option>
+                    <option value="good" selected>Good</option>
+                    <option value="fair">Fair</option>
+                    <option value="poor">Poor</option>
+                </select>
+            </div>
             <button type="submit" class="btn btn-primary" style="width: 100%;">Add Book</button>
         </form>
     </div>
@@ -50,6 +68,24 @@
                     <div>
                         <span class="book-title">{{ book.title }}</span>
                         <span class="book-author">by {{ book.author }}</span>
+                        <div style="margin-top: 0.25rem; font-size: 0.9rem;">
+                            <span>${{ book.rental_price }} for {{ book.rental_duration_days }} minutes</span>
+                            <span class="condition-badge" style="
+                                display: inline-block;
+                                padding: 0.25rem 0.5rem;
+                                border-radius: 4px;
+                                background-color: {% if book.condition == 'new' %}#28a745
+                                    {% elif book.condition == 'excellent' %}#20c997
+                                    {% elif book.condition == 'good' %}#17a2b8
+                                    {% elif book.condition == 'fair' %}#ffc107
+                                    {% else %}#dc3545{% endif %};
+                                color: {% if book.condition == 'fair' %}#000{% else %}#fff{% endif %};
+                                font-size: 0.8rem;
+                                margin-left: 0.5rem;
+                            ">
+                                {{ book.get_condition_display }}
+                            </span>
+                        </div>
                     </div>
                 </div>
                 <div class="book-actions" style="display: flex; align-items: center; gap: 0.5rem; margin-left: 1rem;">

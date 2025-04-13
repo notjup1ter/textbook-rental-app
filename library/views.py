@@ -133,20 +133,27 @@ def librarian_dashboard(request):
 
     if request.method == 'POST':
         if 'delete_book' in request.POST:
-            # Handle book deletion
             book_id = request.POST.get('book_id')
             book = get_object_or_404(Book, id=book_id)
             book.delete()
             return redirect('librarian_dashboard')
         else:
-            # Handle book creation
             title = request.POST.get('title')
             author = request.POST.get('author')
+            rental_price = request.POST.get('rental_price')
+            rental_duration_days = request.POST.get('rental_duration_days')
+            condition = request.POST.get('condition')
             cover_image = request.FILES.get('cover_image')
             pdf_file = request.FILES.get('pdf_file')
             
             if title and author:
-                book = Book(title=title, author=author)
+                book = Book(
+                    title=title,
+                    author=author,
+                    rental_price=rental_price,
+                    rental_duration_days=rental_duration_days,
+                    condition=condition
+                )
                 if cover_image:
                     book.cover_image = cover_image
                 if pdf_file:
@@ -259,8 +266,12 @@ def edit_book(request, book_id):
     if request.method == 'POST':
         form = BookForm(request.POST, request.FILES, instance=book)
         if form.is_valid():
-            form.save()
-            return redirect('librarian_dashboard')
+            try:
+                book = form.save()
+                messages.success(request, f"'{book.title}' has been updated successfully.")
+                return redirect('librarian_dashboard')
+            except Exception as e:
+                messages.error(request, f"Error updating book: {str(e)}")
     else:
         form = BookForm(instance=book)
     

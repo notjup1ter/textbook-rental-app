@@ -26,7 +26,7 @@ class CollectionForm(forms.ModelForm):
 class BookForm(forms.ModelForm):
     class Meta:
         model = Book
-        fields = ['title', 'author', 'cover_image', 'pdf_file']
+        fields = ['title', 'author', 'cover_image', 'pdf_file', 'rental_price', 'rental_duration_days', 'condition']
 
 
 class RentalPaymentForm(forms.Form):
