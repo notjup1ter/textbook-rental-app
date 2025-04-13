@@ -7,8 +7,20 @@
 
 <div class="card">
     <p>Browse through our collection of textbooks and add them to your personal library.</p>
-    
-    {% if books %}
+    <div class="container">
+        <form method="get" class="role="search">
+            <input
+                type="text" 
+                style="display: inline-block; width: calc(100% - 120px); margin-right: 10px;"
+                name="q" 
+                class="form-control me-2" 
+                placeholder="Search by title or author (blank search to get all books again)..." 
+                value="{{ query|default:'' }}"
+            >
+            <button class="btn btn-primary" type="submit">Search</button>
+        </form>
+    </div>
+     {% if books %}
     <ul class="book-list">
         {% for book in books %}
         <li class="book-item">
