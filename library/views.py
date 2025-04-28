@@ -343,7 +343,17 @@ def view_pdf(request, book_id):
     book = get_object_or_404(Book, id=book_id)
     if book.pdf_file:
         try:
-            return FileResponse(book.pdf_file.open(), content_type='application/pdf')
+            # Open the file in binary mode
+            response = FileResponse(
+                book.pdf_file.open('rb'),
+                as_attachment=True,  # This forces download
+                filename=f"{book.title}.pdf"  # Set the download filename
+            )
+            # Set additional headers to force download
+            response['Content-Type'] = 'application/force-download'
+            response['Content-Disposition'] = f'attachment; filename="{book.title}.pdf"'
+            response['X-Sendfile'] = book.pdf_file.name
+            return response
         except FileNotFoundError:
             raise Http404()
     else:
