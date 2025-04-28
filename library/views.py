@@ -13,6 +13,7 @@ from django.db.models import Q
 from django.urls import reverse
 from functools import wraps
 from django.db import IntegrityError
+from django.core.exceptions import ValidationError
 
 #predefined price ranges
 PRICE_RANGES = [
@@ -214,14 +215,20 @@ def assign_role(request):
     librarian_emails = ["bjayden36@gmail.com", "chankyu2004@gmail.com", "haolinchen203@gmail.com", "xsn5hw@virginia.edu"]
     profile, created = Profile.objects.get_or_create(user=request.user)
     
-    if request.user.email in librarian_emails:
-        profile.role = 'librarian'
-        profile.save()
+    # Only assign role if the profile was just created or doesn't have a role
+    if created or not profile.role:
+        if request.user.email in librarian_emails:
+            profile.role = 'librarian'
+            profile.save()
+            return redirect('librarian_dashboard')
+        else: 
+            profile.role = 'patron'
+            profile.save()
+        
+    # If profile already exists and has a role, redirect based on current role
+    if profile.role == 'librarian':
         return redirect('librarian_dashboard')
-    else: 
-        profile.role = 'patron'
-        profile.save()
-        return redirect('my_library')
+    return redirect('my_library')
 
 
 @login_required
@@ -292,18 +299,44 @@ def profile(request):
 @login_required
 @prevent_admin_access
 def collections(request):
-    collections = Collection.objects.all()
-    user_collections = Collection.objects.filter(user=request.user)
-    
-    if request.method == 'POST':
-        form = CollectionForm(request.POST, request.FILES)
-        if form.is_valid():
-            collection = form.save(commit=False)
-            collection.user = request.user
-            collection.save()
-            return redirect('collections')
+    # Get collections based on user role and permissions
+    if request.user.profile.role == 'librarian':
+        collections = Collection.objects.all()
     else:
-        form = CollectionForm()
+        collections = Collection.objects.filter(
+            Q(is_private=False) |  # Public collections
+            Q(allowed_users=request.user) |  # Private collections user has access to
+            Q(user=request.user)  # User's own collections
+        ).distinct()
+
+    user_collections = Collection.objects.filter(user=request.user)
+
+    if request.method == 'POST':
+        form = CollectionForm(request.POST, request.FILES, user=request.user)
+        if form.is_valid():
+            try:
+                # Create collection but don't save to DB yet
+                collection = form.save(commit=False)
+                collection.user = request.user
+                
+                # Save the collection
+                collection.save()
+                
+                # Handle the many-to-many relationships
+                if form.cleaned_data.get('is_private') and form.cleaned_data.get('allowed_users'):
+                    # Set allowed users for private collections
+                    collection.allowed_users.set(form.cleaned_data['allowed_users'])
+                
+                messages.success(request, "Collection created successfully.")
+                return redirect('collections')
+            except Exception as e:
+                # Delete the collection if it was created but had an error
+                if collection.id:
+                    collection.delete()
+                messages.error(request, f"Error creating collection: {str(e)}")
+                
+    else:
+        form = CollectionForm(user=request.user)
     
     return render(request, 'library/collection_page.html', {
         'collections': collections,
@@ -315,12 +348,26 @@ def collections(request):
 def add_to_collection(request, book_id):
     if request.method == 'POST':
         collection_id = request.POST.get('collection_id')
-        if not collection_id:  # If no collection was selected
-            return redirect('explore_library')  # Redirect back without doing anything
+        if not collection_id:
+            return redirect('explore_library')
             
         collection = get_object_or_404(Collection, id=collection_id, user=request.user)
         book = get_object_or_404(Book, id=book_id)
-        collection.books.add(book)
+
+        try:
+            # Check if book is in another private collection
+            if Collection.objects.filter(is_private=True, books=book).exists():
+                messages.error(
+                    request, 
+                    "This book is in a private collection and cannot be added to other collections."
+                )
+                return redirect('explore_library')
+
+            collection.books.add(book)
+            messages.success(request, f"Book added to collection '{collection.title}'")
+        except ValidationError as e:
+            messages.error(request, str(e))
+
     return redirect('explore_library')
 
 @login_required
@@ -541,18 +588,11 @@ def delete_collection(request, collection_id):
 @login_required
 @prevent_admin_access
 def manage_users(request):
-    # Only librarians can access this view
     if request.user.profile.role != 'librarian':
         messages.error(request, "You don't have permission to access this page.")
         return redirect('home')
     
-    # Get all users and create profiles for those who don't have one
     users = User.objects.all()
-    for user in users:
-        Profile.objects.get_or_create(user=user, defaults={'role': 'patron'})
-    
-    # Refresh the queryset to include the newly created profiles
-    users = User.objects.select_related('profile').all()
     
     if request.method == 'POST':
         user_id = request.POST.get('user_id')
@@ -560,21 +600,36 @@ def manage_users(request):
         
         if user_id and action:
             try:
-                user = User.objects.get(id=user_id)
-                profile = user.profile
+                target_user = User.objects.get(id=user_id)
+                profile = Profile.objects.get(user=target_user)
                 
                 if action == 'promote':
                     profile.role = 'librarian'
-                    messages.success(request, f"{user.username} has been promoted to librarian.")
+                    profile.save()
+                    # Force refresh from database
+                    profile.refresh_from_db()
+                    if profile.role == 'librarian':
+                        messages.success(request, f"{target_user.username} has been promoted to librarian.")
+                    else:
+                        messages.error(request, f"Role update failed. Current role: {profile.role}")
+                
                 elif action == 'demote':
                     profile.role = 'patron'
-                    messages.success(request, f"{user.username} has been demoted to patron.")
-                    
-                profile.save()
+                    profile.save()
+                    # Force refresh from database
+                    profile.refresh_from_db()
+                    if profile.role == 'patron':
+                        messages.success(request, f"{target_user.username} has been demoted to patron.")
+                    else:
+                        messages.error(request, f"Role update failed. Current role: {profile.role}")
                 
             except User.DoesNotExist:
-                messages.error(request, "User not found.")
+                messages.error(request, f"User with ID {user_id} not found.")
             except Profile.DoesNotExist:
-                messages.error(request, "User profile not found.")
+                messages.error(request, f"Profile for user with ID {user_id} not found.")
+            except Exception as e:
+                messages.error(request, f"Error updating role: {str(e)}")
     
+    # Ensure we get fresh data after any updates
+    users = User.objects.select_related('profile').all()
     return render(request, 'library/manage_users.html', {'users': users})

@@ -24,6 +24,25 @@
                 {{ form.cover_image }}
                 <small style="display: block; margin-top: 0.5rem; color: var(--text-light);">Optional: Add a cover image for your collection</small>
             </div>
+            
+            {% if user.profile.role == 'librarian' %}
+            <div class="form-group">
+                <div class="form-check">
+                    {{ form.is_private }}
+                    <label class="form-check-label" for="{{ form.is_private.id_for_label }}">
+                        Make Collection Private
+                    </label>
+                </div>
+                <small style="display: block; margin-top: 0.5rem; color: var(--text-light);">Private collections can only be accessed by selected users</small>
+            </div>
+            
+            <div class="form-group private-collection-options" style="display: none;">
+                <label for="{{ form.allowed_users.id_for_label }}">Allowed Users</label>
+                {{ form.allowed_users }}
+                <small style="display: block; margin-top: 0.5rem; color: var(--text-light);">{{ form.allowed_users.help_text }}</small>
+            </div>
+            {% endif %}
+            
             <button type="submit" class="btn btn-primary" style="width: 100%;">Create Collection</button>
         </form>
     </div>
@@ -47,10 +66,28 @@
                     <h3 class="book-title">
                         <a href="{% url 'collection_detail' collection.id %}" style="color: inherit; text-decoration: none;">
                             {{ collection.title }}
+                            {% if collection.is_private %}
+                            <span class="badge" style="background-color: var(--primary-color); color: white; font-size: 0.8rem; padding: 0.25rem 0.5rem; border-radius: 12px; margin-left: 0.5rem;">
+                                Private Collection
+                            </span>
+                            {% endif %}
                         </a>
                     </h3>
                     <p class="book-author">Created by {{ collection.user.username }}</p>
                     <p>{{ collection.description }}</p>
+                    
+                    {% if collection.is_private %}
+                    <div style="margin-top: 1rem;">
+                        <h4 style="font-size: 0.9rem; color: var(--text-light);">Authorized Users:</h4>
+                        <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                            {% for allowed_user in collection.allowed_users.all %}
+                            <span style="background-color: #e9ecef; padding: 0.25rem 0.5rem; border-radius: 12px; font-size: 0.8rem;">
+                                {{ allowed_user.username }}
+                            </span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
                     
                     {% if collection.books.all %}
                     <div class="collection-books" style="margin-top: 1rem;">
@@ -85,4 +122,23 @@
         {% endif %}
     </div>
 </div>
+
+<!-- Add this JavaScript at the bottom of the template -->
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const isPrivateCheckbox = document.getElementById('{{ form.is_private.id_for_label }}');
+    const privateOptions = document.querySelector('.private-collection-options');
+    
+    if (isPrivateCheckbox && privateOptions) {
+        isPrivateCheckbox.addEventListener('change', function() {
+            privateOptions.style.display = this.checked ? 'block' : 'none';
+        });
+        
+        // Set initial state
+        privateOptions.style.display = isPrivateCheckbox.checked ? 'block' : 'none';
+    }
+});
+</script>
+{% endblock %}
 {% endblock %} 

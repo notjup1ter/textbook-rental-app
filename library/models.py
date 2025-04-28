@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
 from datetime import datetime, timedelta
+from django.core.exceptions import ValidationError
 
 class Book(models.Model):
     CONDITION_CHOICES = (
@@ -66,6 +67,21 @@ class Collection(models.Model):
     books = models.ManyToManyField(Book, blank=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     cover_image = models.ImageField(upload_to='collection_covers/', blank=True, null=True)
+    is_private = models.BooleanField(default=False)
+    allowed_users = models.ManyToManyField(User, blank=True, related_name='accessible_collections')
+
+    def clean(self):
+        if not hasattr(self, 'user'):
+            return
+            
+        if self.is_private and not self.user.profile.role == 'librarian':
+            raise ValidationError({
+                'is_private': "Only librarians can create private collections."
+            })
+
+    def save(self, *args, **kwargs):
+        self.clean()
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return self.title

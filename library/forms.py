@@ -2,6 +2,7 @@ from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 from .models import Profile, Collection, Book, BookRating
+from django.core.exceptions import ValidationError
 
 class CustomUserCreationForm(UserCreationForm):
     email = forms.EmailField(required=True)
@@ -18,9 +19,42 @@ class ProfileForm(forms.ModelForm):
 
 
 class CollectionForm(forms.ModelForm):
+    allowed_users = forms.ModelMultipleChoiceField(
+        queryset=User.objects.filter(profile__role='patron'),
+        required=False,
+        widget=forms.SelectMultiple(attrs={'class': 'form-control'}),
+        help_text="Select users who can access this private collection"
+    )
+
     class Meta:
         model = Collection
-        fields = ['title', 'description', 'cover_image']
+        fields = ['title', 'description', 'cover_image', 'is_private', 'allowed_users']
+        widgets = {
+            'description': forms.Textarea(attrs={'rows': 3, 'class': 'form-control'}),
+            'is_private': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        user = kwargs.pop('user', None)
+        super().__init__(*args, **kwargs)
+        if user and user.profile.role != 'librarian':
+            self.fields.pop('is_private')
+            self.fields.pop('allowed_users')
+        elif user:
+            # Update queryset to exclude the creating user
+            self.fields['allowed_users'].queryset = User.objects.filter(
+                profile__role='patron'
+            ).exclude(id=user.id)
+
+    def clean(self):
+        cleaned_data = super().clean()
+        is_private = cleaned_data.get('is_private')
+        allowed_users = cleaned_data.get('allowed_users')
+
+        if is_private and not allowed_users:
+            self.add_error('allowed_users', "Private collections must have at least one allowed user.")
+
+        return cleaned_data
 
 
 class BookForm(forms.ModelForm):
