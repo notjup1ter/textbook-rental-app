@@ -306,8 +306,23 @@ def profile(request):
 @login_required
 @prevent_admin_access
 def collections(request):
-    # Remove all filtering - show all collections to everyone
-    collections = Collection.objects.all().order_by('-id')  # Most recent first
+    # Get search query from request
+    query = request.GET.get('q', '')
+    
+    # Base queryset
+    collections = Collection.objects.all()
+    
+    # Apply search if query exists
+    if query:
+        collections = collections.filter(
+            Q(title__icontains=query) |
+            Q(description__icontains=query) |
+            Q(user__username__icontains=query) |
+            Q(books__title__icontains=query) |
+            Q(books__author__icontains=query)
+        ).distinct()
+    
+    collections = collections.order_by('-id')  # Most recent first
     user_collections = Collection.objects.filter(user=request.user)
 
     if request.method == 'POST':
@@ -333,7 +348,8 @@ def collections(request):
     return render(request, 'library/collection_page.html', {
         'collections': collections,
         'user_collections': user_collections,
-        'form': form
+        'form': form,
+        'query': query,  # Pass the query back to the template
     })
 
 @login_required
@@ -383,66 +399,9 @@ def collection_detail(request, collection_id):
     user_library, created = UserLibrary.objects.get_or_create(user=request.user)
     user_library_books = user_library.books.all()
     
-    if request.method == 'POST':
-        if 'request_access' in request.POST and request.user.profile.role == 'patron':
-            collection.access_requests.add(request.user)
-            messages.success(request, f"Access request sent for collection '{collection.title}'")
-            # Notify all librarians about the access request
-            librarians = User.objects.filter(profile__role='librarian')
-            for librarian in librarians:
-                Notification.objects.create(
-                    user=librarian,
-                    message=f"{request.user.username} has requested access to collection '{collection.title}'",
-                    link=reverse('collection_detail', args=[collection.id])
-                )
-            return redirect('collections')
-        elif request.user.profile.role == 'librarian':
-            action = request.POST.get('action')
-            user_id = request.POST.get('user_id')
-            
-            if action == 'remove_user' and user_id:
-                try:
-                    target_user = User.objects.get(id=user_id)
-                    collection.allowed_users.remove(target_user)
-                    Notification.objects.create(
-                        user=target_user,
-                        message=f"Your access to collection '{collection.title}' has been removed",
-                        link=reverse('collections')
-                    )
-                    messages.success(request, f"Access removed for {target_user.username}")
-                except User.DoesNotExist:
-                    messages.error(request, "User not found")
-                return redirect('collection_detail', collection_id=collection_id)
-            
-            elif action == 'add_user' and user_id:
-                try:
-                    target_user = User.objects.get(id=user_id)
-                    collection.allowed_users.add(target_user)
-                    collection.access_requests.remove(target_user)
-                    Notification.objects.create(
-                        user=target_user,
-                        message=f"You have been granted access to collection '{collection.title}'",
-                        link=reverse('collection_detail', args=[collection.id])
-                    )
-                    messages.success(request, f"Access granted to {target_user.username}")
-                except User.DoesNotExist:
-                    messages.error(request, "User not found")
-                return redirect('collection_detail', collection_id=collection_id)
-            
-            elif action == 'reject_request' and user_id:
-                try:
-                    target_user = User.objects.get(id=user_id)
-                    collection.access_requests.remove(target_user)
-                    Notification.objects.create(
-                        user=target_user,
-                        message=f"Your access request for collection '{collection.title}' has been rejected",
-                        link=reverse('collections')
-                    )
-                    messages.success(request, f"Access request from {target_user.username} has been rejected")
-                except User.DoesNotExist:
-                    messages.error(request, "User not found")
-                return redirect('collection_detail', collection_id=collection_id)
-
+    # Add search functionality
+    query = request.GET.get('q', '')
+    
     # Determine if the user can view the collection's contents
     can_view_contents = (
         not collection.is_private or
@@ -451,25 +410,37 @@ def collection_detail(request, collection_id):
         request.user.profile.role == 'librarian'
     )
 
-    # Determine if the user can add items
-    can_add_items = collection.can_add_items(request.user)
-
-    # Check if user has already requested access
-    has_requested_access = request.user in collection.access_requests.all()
-
     context = {
         'collection': collection,
         'can_view_contents': can_view_contents,
-        'can_add_items': can_add_items,
-        'has_requested_access': has_requested_access,
+        'has_requested_access': request.user in collection.access_requests.all(),
         'is_owner': request.user == collection.user,
         'is_librarian': request.user.profile.role == 'librarian',
+        'query': query,  # Pass query to template
     }
 
     if can_view_contents:
+        viewable_books = collection.books.filter(id__in=user_library_books)
+        non_viewable_books = collection.books.exclude(id__in=user_library_books)
+        
+        # Apply search if query exists
+        if query:
+            viewable_books = viewable_books.filter(
+                Q(title__icontains=query) |
+                Q(author__icontains=query) |
+                Q(description__icontains=query) |
+                Q(isbn__icontains=query)
+            )
+            non_viewable_books = non_viewable_books.filter(
+                Q(title__icontains=query) |
+                Q(author__icontains=query) |
+                Q(description__icontains=query) |
+                Q(isbn__icontains=query)
+            )
+        
         context.update({
-            'viewable_books': collection.books.filter(id__in=user_library_books),
-            'non_viewable_books': collection.books.exclude(id__in=user_library_books),
+            'viewable_books': viewable_books,
+            'non_viewable_books': non_viewable_books,
         })
 
     # Allow all librarians to manage private collections

@@ -5,6 +5,24 @@
 {% block content %}
 <h1>Book Collections</h1>
 
+<!-- Add search bar -->
+<div class="search-container card" style="margin-bottom: 2rem; padding: 1rem;">
+    <form method="get" class="search-form" style="display: flex; gap: 1rem;">
+        <input 
+            type="text" 
+            name="q" 
+            class="form-control" 
+            placeholder="Search collections by title, description, creator, or book..." 
+            value="{{ query|default:'' }}"
+            style="flex: 1;"
+        >
+        <button type="submit" class="btn btn-primary">Search</button>
+        {% if query %}
+            <a href="{% url 'collections' %}" class="btn btn-outline">Clear</a>
+        {% endif %}
+    </form>
+</div>
+
 <div class="dashboard-grid" style="display: grid; grid-template-columns: 1fr 2fr; gap: 2rem;">
     <!-- Create Collection Form -->
     <div class="card">
@@ -51,70 +69,76 @@
     <div class="card">
         <h2 class="card-title">Browse Collections</h2>
         {% if collections %}
-        <ul class="book-list">
-            {% for collection in collections %}
-            <li class="book-item">
-                {% if collection.cover_image %}
-                <img src="{{ collection.cover_image.url }}" alt="{{ collection.title }} cover" class="book-cover">
-                {% else %}
-                <div class="book-cover" style="background-color: #e9ecef; display: flex; align-items: center; justify-content: center;">
-                    <span style="font-size: 3rem; color: #adb5bd;">📚</span>
+            <!-- Add search results message if there's a query -->
+            {% if query %}
+                <div class="search-results-info" style="grid-column: span 2; margin-bottom: 1rem;">
+                    <p>Showing results for "{{ query }}" ({{ collections|length }} found)</p>
                 </div>
-                {% endif %}
-                
-                <div class="book-info">
-                    <h3 class="book-title">
-                        <a href="{% url 'collection_detail' collection.id %}" style="color: inherit; text-decoration: none;">
-                            {{ collection.title }}
-                            {% if collection.is_private %}
-                            <span class="badge" style="background-color: var(--primary-color); color: white; font-size: 0.8rem; padding: 0.25rem 0.5rem; border-radius: 12px; margin-left: 0.5rem;">
-                                Private Collection
-                            </span>
-                            {% endif %}
-                        </a>
-                    </h3>
-                    <p class="book-author">Created by {{ collection.user.username }}</p>
-                    <p>{{ collection.description }}</p>
+            {% endif %}
+            <ul class="book-list">
+                {% for collection in collections %}
+                <li class="book-item">
+                    {% if collection.cover_image %}
+                    <img src="{{ collection.cover_image.url }}" alt="{{ collection.title }} cover" class="book-cover">
+                    {% else %}
+                    <div class="book-cover" style="background-color: #e9ecef; display: flex; align-items: center; justify-content: center;">
+                        <span style="font-size: 3rem; color: #adb5bd;">📚</span>
+                    </div>
+                    {% endif %}
                     
-                    {% if collection.is_private %}
-                    <div style="margin-top: 1rem;">
-                        <h4 style="font-size: 0.9rem; color: var(--text-light);">Authorized Users:</h4>
-                        <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
-                            {% for allowed_user in collection.allowed_users.all %}
-                            <span style="background-color: #e9ecef; padding: 0.25rem 0.5rem; border-radius: 12px; font-size: 0.8rem;">
-                                {{ allowed_user.username }}
-                            </span>
-                            {% endfor %}
+                    <div class="book-info">
+                        <h3 class="book-title">
+                            <a href="{% url 'collection_detail' collection.id %}" style="color: inherit; text-decoration: none;">
+                                {{ collection.title }}
+                                {% if collection.is_private %}
+                                <span class="badge" style="background-color: var(--primary-color); color: white; font-size: 0.8rem; padding: 0.25rem 0.5rem; border-radius: 12px; margin-left: 0.5rem;">
+                                    Private Collection
+                                </span>
+                                {% endif %}
+                            </a>
+                        </h3>
+                        <p class="book-author">Created by {{ collection.user.username }}</p>
+                        <p>{{ collection.description }}</p>
+                        
+                        {% if collection.is_private %}
+                        <div style="margin-top: 1rem;">
+                            <h4 style="font-size: 0.9rem; color: var(--text-light);">Authorized Users:</h4>
+                            <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                                {% for allowed_user in collection.allowed_users.all %}
+                                <span style="background-color: #e9ecef; padding: 0.25rem 0.5rem; border-radius: 12px; font-size: 0.8rem;">
+                                    {{ allowed_user.username }}
+                                </span>
+                                {% endfor %}
+                            </div>
                         </div>
+                        {% endif %}
+                        
+                        {% if collection.books.all %}
+                        <div class="collection-books" style="margin-top: 1rem;">
+                            <h4 style="font-size: 0.9rem; color: var(--text-light);">Books in this collection:</h4>
+                            <ul style="list-style: none; padding: 0;">
+                                {% for book in collection.books.all|slice:":3" %}
+                                <li style="font-size: 0.9rem;">{{ book.title }}</li>
+                                {% endfor %}
+                                {% if collection.books.count > 3 %}
+                                <li style="font-size: 0.9rem; color: var(--text-light);">
+                                    and {{ collection.books.count|add:"-3" }} more...
+                                </li>
+                                {% endif %}
+                            </ul>
+                        </div>
+                        {% endif %}
                     </div>
-                    {% endif %}
                     
-                    {% if collection.books.all %}
-                    <div class="collection-books" style="margin-top: 1rem;">
-                        <h4 style="font-size: 0.9rem; color: var(--text-light);">Books in this collection:</h4>
-                        <ul style="list-style: none; padding: 0;">
-                            {% for book in collection.books.all|slice:":3" %}
-                            <li style="font-size: 0.9rem;">{{ book.title }}</li>
-                            {% endfor %}
-                            {% if collection.books.count > 3 %}
-                            <li style="font-size: 0.9rem; color: var(--text-light);">
-                                and {{ collection.books.count|add:"-3" }} more...
-                            </li>
-                            {% endif %}
-                        </ul>
+                    <div class="book-actions" style="display: flex; flex-direction: column; gap: 0.5rem;">
+                        {% if collection.user == user %}
+                            <span class="in-library">✓ Your Collection</span>
+                        {% endif %}
+                        <a href="{% url 'collection_detail' collection.id %}" class="btn btn-primary" style="width: 100%;">View Collection</a>
                     </div>
-                    {% endif %}
-                </div>
-                
-                <div class="book-actions" style="display: flex; flex-direction: column; gap: 0.5rem;">
-                    {% if collection.user == user %}
-                        <span class="in-library">✓ Your Collection</span>
-                    {% endif %}
-                    <a href="{% url 'collection_detail' collection.id %}" class="btn btn-primary" style="width: 100%;">View Collection</a>
-                </div>
-            </li>
-            {% endfor %}
-        </ul>
+                </li>
+                {% endfor %}
+            </ul>
         {% else %}
         <div class="empty-state">
             <p>No collections available yet. Create your first collection!</p>

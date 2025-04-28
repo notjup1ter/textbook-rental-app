@@ -6,6 +6,34 @@
 <div class="collection-header">
     <h1>{{ collection.title }}</h1>
     <p>{{ collection.description }}</p>
+    
+    <!-- Add search bar for collection contents -->
+    {% if can_view_contents %}
+    <div class="search-container card" style="margin: 1rem 0; padding: 1rem;">
+        <form method="get" class="search-form" style="display: flex; gap: 1rem;">
+            <input 
+                type="text" 
+                name="q" 
+                class="form-control" 
+                placeholder="Search within this collection..." 
+                value="{{ query|default:'' }}"
+                style="flex: 1;"
+            >
+            <button type="submit" class="btn btn-primary">Search</button>
+            {% if query %}
+                <a href="{% url 'collection_detail' collection.id %}" class="btn btn-outline">Clear</a>
+            {% endif %}
+        </form>
+    </div>
+    
+    {% if query %}
+        <div class="search-results-info" style="margin-bottom: 1rem;">
+            <p>Showing results for "{{ query }}" 
+               ({{ viewable_books|length|add:non_viewable_books|length }} found)</p>
+        </div>
+    {% endif %}
+    {% endif %}
+    
     <div class="collection-meta">
         <span>Created by {{ collection.user.username }} |</span>
         {% if collection.is_private %}
