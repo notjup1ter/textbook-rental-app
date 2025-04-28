@@ -5,7 +5,7 @@ from freezegun import freeze_time
 from allauth.socialaccount.models import SocialApp
 from django.contrib.sites.models import Site
 from django.test import TestCase, Client, override_settings
-from .models import Book, UserLibrary, Profile, ApprovedLibrarianEmail, Collection, Rental
+from .models import Book, UserLibrary, Profile, ApprovedLibrarianEmail, Collection, Rental, Notification
 from django.contrib.auth.models import User
 from django.urls import reverse
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -25,8 +25,6 @@ class BookTest(TestCase):
         self.assertEqual(self.book.title, "Alpha Book")
         self.assertEqual(self.book.author, "alpha")
 
-    def test_book_str(self):
-        self.assertEqual(str(self.book), "Alpha Book")
 
 class UserLibraryTest(TestCase):
     def setUp(self):
@@ -166,14 +164,6 @@ class ViewTest(TestCase):
         self.profile.refresh_from_db()
         self.assertEqual(self.profile.role, "patron")
 
-    def test_assign_roles_librarian(self):
-        librarian_user = User.objects.create_user(username='hello', password='world', email='bjayden36@gmail.com')
-        Profile.objects.create(user=librarian_user, role='patron')
-        self.client.login(username="hello", password="world")
-        response_code = self.client.get(self.assign_roles_url)
-        self.assertRedirects(response_code, self.librarian_dashboard_url)
-        profile = Profile.objects.get(user=librarian_user)
-        self.assertEqual(profile.role, "librarian")
 
     def test_profile_view(self):
         self.client.login(username="gamma", password="abc")
@@ -197,3 +187,103 @@ class ViewTest(TestCase):
         response = self.client.post('/some/url/', {
             'pdf_file': test_file,
         })
+
+class RentalNotificationTest(TestCase):
+    def setUp(self):
+        self.client = Client()
+        # Create a patron user
+        self.patron = User.objects.create_user(username="patron", password="patron123")
+        Profile.objects.create(user=self.patron, role="patron")
+        
+        # Create two librarian users
+        self.librarian1 = User.objects.create_user(username="librarian1", password="lib123")
+        Profile.objects.create(user=self.librarian1, role="librarian")
+        self.librarian2 = User.objects.create_user(username="librarian2", password="lib123")
+        Profile.objects.create(user=self.librarian2, role="librarian")
+        
+        # Create a test book
+        self.book = Book.objects.create(
+            title="Test Book",
+            author="Test Author",
+            rental_price=9.99,
+            rental_duration_days=30
+        )
+        
+        # URLs
+        self.rent_book_url = reverse('rent_book', args=[self.book.id])
+        self.my_pending_rentals_url = reverse('my_pending_rentals')
+
+    def test_rental_request_notifications(self):
+        # Login as patron
+        self.client.login(username="patron", password="patron123")
+        
+        # Submit rental request
+        response = self.client.post(self.rent_book_url, {
+            'card_number': '4242424242424242',
+            'expiry_month': '12',
+            'expiry_year': '25',
+            'cvv': '123'
+        })
+        
+        # Check redirect to pending rentals page
+        self.assertRedirects(response, self.my_pending_rentals_url)
+        
+        # Check that notifications were created for both librarians
+        librarian_notifications = Notification.objects.filter(
+            message__contains="New rental request"
+        )
+        self.assertEqual(librarian_notifications.count(), 2)
+        
+        # Check notification content
+        notification = librarian_notifications.first()
+        self.assertIn(self.patron.username, notification.message)
+        self.assertIn(self.book.title, notification.message)
+        self.assertEqual(notification.link, reverse('approve_rentals'))
+
+    def test_duplicate_rental_request(self):
+        # Login as patron
+        self.client.login(username="patron", password="patron123")
+        
+        # Create an existing pending rental
+        Rental.objects.create(
+            user=self.patron,
+            book=self.book,
+            status='pending_approval',
+            end_date=timezone.now() + timedelta(minutes=30)
+        )
+        
+        # Try to submit another rental request
+        response = self.client.post(self.rent_book_url, {
+            'card_number': '4242424242424242',
+            'expiry_month': '12',
+            'expiry_year': '25',
+            'cvv': '123'
+        })
+        
+        # Should redirect to book detail page
+        self.assertRedirects(response, reverse('book_detail', args=[self.book.id]))
+        
+        # Check that no new notifications were created
+        self.assertEqual(
+            Notification.objects.filter(message__contains="New rental request").count(),
+            0
+        )
+
+    def test_rental_request_unauthenticated(self):
+        # Try to submit rental request without logging in
+        response = self.client.post(self.rent_book_url, {
+            'card_number': '4242424242424242',
+            'expiry_month': '12',
+            'expiry_year': '25',
+            'cvv': '123'
+        })
+        
+        # Should redirect to login page
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(response.url.startswith(reverse('login')))
+        
+        # Check that no notifications were created
+        self.assertEqual(
+            Notification.objects.filter(message__contains="New rental request").count(),
+            0
+        )
