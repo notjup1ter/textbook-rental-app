@@ -31,12 +31,19 @@
         background-color: #2e2e2e;
         color: #ffffff;
       }
+      nav {
+        background-color: var(--nav-bg) !important;
+      }
+      .theme-dark nav {
+        background-color: #121212 !important;
+      }
+
     </style>
     {% else %}
     <style>
       body {
         background-color: #ffffff;
-        color: #000000;
+        color: #ffffff;
       }
       /* more light mode styles */
     </style>
@@ -72,6 +79,9 @@
                               Log Out
                           </a>
                       </li>
+                      {% if user.is_authenticated and user.profile.role == 'librarian' %}
+                          <li><a href="{% url 'manage_users' %}">Manage Users</a></li>
+                      {% endif %}
                   {% else %}
                       <li><a href="{% url 'login' %}" class="btn btn-outline">Login</a></li>
                       <li><a href="{% url 'register' %}" class="btn btn-primary">Register</a></li>

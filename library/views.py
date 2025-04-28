@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth.models import Group
+from django.contrib.auth.models import Group, User
 from .models import Book, UserLibrary, Profile, ApprovedLibrarianEmail, Collection, Rental, Notification
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import logout, login
@@ -478,3 +478,43 @@ def delete_collection(request, collection_id):
         messages.success(request, f"Collection '{collection.title}' has been deleted.")
         return redirect('collections')
     return redirect('collection_detail', collection_id=collection_id)
+
+@login_required
+def manage_users(request):
+    # Only librarians can access this view
+    if request.user.profile.role != 'librarian':
+        messages.error(request, "You don't have permission to access this page.")
+        return redirect('home')
+    
+    # Get all users and create profiles for those who don't have one
+    users = User.objects.all()
+    for user in users:
+        Profile.objects.get_or_create(user=user, defaults={'role': 'patron'})
+    
+    # Refresh the queryset to include the newly created profiles
+    users = User.objects.select_related('profile').all()
+    
+    if request.method == 'POST':
+        user_id = request.POST.get('user_id')
+        action = request.POST.get('action')
+        
+        if user_id and action:
+            try:
+                user = User.objects.get(id=user_id)
+                profile = user.profile
+                
+                if action == 'promote':
+                    profile.role = 'librarian'
+                    messages.success(request, f"{user.username} has been promoted to librarian.")
+                elif action == 'demote':
+                    profile.role = 'patron'
+                    messages.success(request, f"{user.username} has been demoted to patron.")
+                    
+                profile.save()
+                
+            except User.DoesNotExist:
+                messages.error(request, "User not found.")
+            except Profile.DoesNotExist:
+                messages.error(request, "User profile not found.")
+    
+    return render(request, 'library/manage_users.html', {'users': users})

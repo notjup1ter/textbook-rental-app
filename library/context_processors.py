@@ -10,4 +10,11 @@ def notifications(request):
             'notifications': unread_notifications,
             'notification_count': unread_notifications.count()
         }
-    return {'notifications': [], 'notification_count': 0} 
+    return {'notifications': [], 'notification_count': 0}
+
+def theme(request):
+    if request.user.is_authenticated:
+        theme = request.user.profile.preference
+    else:
+        theme = request.session.get('theme', 'light')
+    return {'theme': theme} 
