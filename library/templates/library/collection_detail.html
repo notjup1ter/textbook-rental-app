@@ -27,6 +27,62 @@
 <div class="card">
     <h2 class="card-title">Books in this Collection</h2>
     
+    {% if collection.is_private %}
+        <div class="private-collection-section" style="margin: 2rem 0; padding: 1rem; background-color: #f8f9fa; border-radius: 8px;">
+            <h3>Private Collection Access</h3>
+            
+            {% if user.profile.role == 'librarian' %}
+                <!-- Current Allowed Users -->
+                <div class="current-users" style="margin-bottom: 2rem;">
+                    <h4>Current Allowed Users</h4>
+                    {% if collection.allowed_users.exists %}
+                        <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                            {% for allowed_user in collection.allowed_users.all %}
+                                <div class="user-badge" style="background-color: #e9ecef; padding: 0.5rem; border-radius: 4px; display: flex; align-items: center;">
+                                    <span>{{ allowed_user.username }}</span>
+                                    <form method="post" style="margin-left: 0.5rem;">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="action" value="remove_user">
+                                        <input type="hidden" name="user_id" value="{{ allowed_user.id }}">
+                                        <button type="submit" class="btn btn-danger btn-sm" 
+                                                style="padding: 0.25rem 0.5rem; font-size: 0.8rem;"
+                                                onclick="return confirm('Remove {{ allowed_user.username }} from allowed users?')">
+                                            ×
+                                        </button>
+                                    </form>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p>No users have been granted access yet.</p>
+                    {% endif %}
+                </div>
+
+                <!-- Add New Users -->
+                {% if available_users %}
+                    <div class="add-users">
+                        <h4>Add Users</h4>
+                        <form method="post" class="add-user-form" style="display: flex; gap: 1rem; align-items: flex-end;">
+                            {% csrf_token %}
+                            <div class="form-group" style="flex-grow: 1;">
+                                <select name="user_id" class="form-control" required>
+                                    <option value="">Select a user to add...</option>
+                                    {% for user in available_users %}
+                                        <option value="{{ user.id }}">{{ user.username }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <input type="hidden" name="action" value="add_user">
+                            <button type="submit" class="btn btn-primary">Add User</button>
+                        </form>
+                    </div>
+                {% endif %}
+            {% else %}
+                <p>This is a private collection. Access is managed by librarians.</p>
+            {% endif %}
+        </div>
+    {% endif %}
+    
     {% if viewable_books %}
     <h2 class="card-title">Books You Can View</h2>
     <ul class="book-list">

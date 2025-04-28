@@ -23,7 +23,7 @@ class CollectionForm(forms.ModelForm):
         queryset=User.objects.filter(profile__role='patron'),
         required=False,
         widget=forms.SelectMultiple(attrs={'class': 'form-control'}),
-        help_text="Select users who can access this private collection"
+        help_text="Select users (Ctrl + click to select multiple) who can access this private collection"
     )
 
     class Meta:

@@ -378,6 +378,30 @@ def collection_detail(request, collection_id):
     user_library, created = UserLibrary.objects.get_or_create(user=request.user)
     user_library_books = user_library.books.all()
     
+    # Handle updating allowed users
+    if request.method == 'POST' and request.user.profile.role == 'librarian':
+        action = request.POST.get('action')
+        user_id = request.POST.get('user_id')
+        
+        if action and user_id:
+            try:
+                target_user = User.objects.get(id=user_id)
+                if action == 'add_user':
+                    collection.allowed_users.add(target_user)
+                    messages.success(request, f"{target_user.username} has been added to the collection's allowed users.")
+                elif action == 'remove_user':
+                    collection.allowed_users.remove(target_user)
+                    messages.success(request, f"{target_user.username} has been removed from the collection's allowed users.")
+            except User.DoesNotExist:
+                messages.error(request, "User not found.")
+    
+    # Get all potential users that could be added (patrons only)
+    available_users = None
+    if request.user.profile.role == 'librarian' and collection.is_private:
+        available_users = User.objects.filter(profile__role='patron').exclude(
+            id__in=collection.allowed_users.values_list('id', flat=True)
+        )
+    
     # Filter collection books to only show those in user's library
     viewable_books = collection.books.filter(id__in=user_library_books)
     non_viewable_books = collection.books.exclude(id__in=user_library_books)
@@ -386,6 +410,7 @@ def collection_detail(request, collection_id):
         'collection': collection,
         'viewable_books': viewable_books,
         'non_viewable_books': non_viewable_books,
+        'available_users': available_users,
     })
 
 @login_required
