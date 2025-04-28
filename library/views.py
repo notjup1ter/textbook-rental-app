@@ -116,11 +116,11 @@ def my_library(request):
                 book = get_object_or_404(Book, id=book_id)
                 # Cancel any active rentals for this book
                 Rental.objects.filter(
-                    user=request.user,
                     book=book,
+                    user=request.user,
                     status='active'
                 ).update(status='cancelled')
-                # Remove book from library
+                
                 user_library.books.remove(book)
                 # Create notification
                 Notification.objects.create(
@@ -228,14 +228,16 @@ def assign_role(request):
             profile.role = 'librarian'
             profile.save()
             return redirect('librarian_dashboard')
-        else: 
+        else:
             profile.role = 'patron'
             profile.save()
-
-    # If profile already exists and has a role, redirect based on current role
+            return redirect('my_library')
+    
+    # If role is already assigned, redirect based on role
     if profile.role == 'librarian':
         return redirect('librarian_dashboard')
-    return redirect('my_library')
+    else:
+        return redirect('my_library')
 
 
 @login_required
@@ -272,10 +274,9 @@ def librarian_dashboard(request):
                         description=description,
                         rental_price=rental_price,
                         rental_duration_days=rental_duration_days,
-                        condition=condition
+                        condition=condition,
+                        cover_image=cover_image
                     )
-                    if cover_image:
-                        book.cover_image = cover_image
                     if pdf_file:
                         book.pdf_file = pdf_file
                     book.save()
@@ -320,8 +321,7 @@ def collections(request):
             Q(title__icontains=query) |
             Q(description__icontains=query) |
             Q(user__username__icontains=query) |
-            Q(books__title__icontains=query) |
-            Q(books__author__icontains=query)
+            Q(books__title__icontains=query)
         ).distinct()
     
     collections = collections.order_by('-id')  # Most recent first
@@ -567,51 +567,41 @@ def rent_book(request, book_id):
     existing_rental = Rental.objects.filter(
         user=request.user,
         book=book,
-        status='active',
+        status__in=['pending_approval', 'pending', 'active'],
         end_date__gte=current_time
     ).first()
     
     if existing_rental:
-        messages.warning(request, "You already have an active rental for this book.")
+        if existing_rental.status == 'pending_approval':
+            messages.warning(request, "You already have a pending rental request for this book.")
+        else:
+            messages.warning(request, "You already have an active rental for this book.")
         return redirect('book_detail', book_id=book_id)
 
     if request.method == 'POST':
         form = RentalPaymentForm(request.POST)
         if form.is_valid():
-            payment_successful = process_mock_payment(book.rental_price, form.cleaned_data['card_number'])
+            # Create rental with pending_approval status
+            rental = Rental.objects.create(
+                user=request.user,
+                book=book,
+                start_date=current_time,
+                end_date=current_time + timedelta(minutes=book.rental_duration_days),
+                status='pending_approval',
+                payment_id=form.cleaned_data['card_number']  # Store the card number for payment processing
+            )
             
-            if payment_successful:
-                # Create rental
-                rental = Rental.objects.create(
-                    user=request.user,
-                    book=book,
-                    start_date=current_time,
-                    end_date=current_time + timedelta(minutes=book.rental_duration_days),
-                    status='active',
-                    payment_id=f"MOCK_{current_time.timestamp()}"
-                )
-                
-                # Add book to library
-                user_library, _ = UserLibrary.objects.get_or_create(user=request.user)
-                user_library.books.add(book)
-                
-                # Create success notification
+            # Create a single notification for librarians
+            librarians = User.objects.filter(profile__role='librarian')
+            for librarian in librarians:
                 Notification.objects.create(
-                    user=request.user,
-                    message=f"Successfully rented {book.title} for {book.rental_duration_days} minutes",
-                    link=reverse('my_library')
+                    user=librarian,
+                    message=f"New rental request: {request.user.username} wants to rent '{book.title}'",
+                    link=reverse('approve_rentals')
                 )
-                
-                messages.success(request, f"Successfully rented {book.title} for {book.rental_duration_days} minutes!")
-                return redirect('my_library')
-            else:
-                # Create failure notification
-                Notification.objects.create(
-                    user=request.user,
-                    message=f"Payment failed for {book.title}. Please try again.",
-                    link=reverse('rent_book', args=[book.id])
-                )
-                messages.error(request, "Payment failed. Please try again.")
+            
+            messages.success(request, "Your rental request has been submitted and is pending librarian approval.")
+            return redirect('my_pending_rentals')
     else:
         form = RentalPaymentForm()
     
@@ -622,27 +612,26 @@ def rent_book(request, book_id):
 
 @login_required
 @prevent_admin_access
-def my_rentals(request):
+def my_pending_rentals(request):
+    # Get all rentals for the current user
+    pending_rentals = Rental.objects.filter(
+        user=request.user,
+        status='pending_approval'
+    ).select_related('book')
+    
     active_rentals = Rental.objects.filter(
         user=request.user,
         status='active',
-        end_date__gte=timezone.now().date()
-    )
+        end_date__gte=timezone.now()
+    ).select_related('book')
+    
     expired_rentals = Rental.objects.filter(
         user=request.user,
-        status='active',
-        end_date__lt=timezone.now().date()
-    )
+        status__in=['expired', 'cancelled', 'rejected']
+    ).select_related('book')
     
-    # Update expired rentals
-    for rental in expired_rentals:
-        rental.status = 'expired'
-        rental.save()
-        # Remove book from user's library
-        user_library = UserLibrary.objects.get(user=request.user)
-        user_library.books.remove(rental.book)
-    
-    return render(request, 'library/my_rentals.html', {
+    return render(request, 'library/my_pending_rentals.html', {
+        'pending_rentals': pending_rentals,
         'active_rentals': active_rentals,
         'expired_rentals': expired_rentals
     })
@@ -726,10 +715,42 @@ def manage_users(request):
     return render(request, 'library/manage_users.html', {'users': users})
 
 @login_required
-def mark_notification_read(request, notification_id):
+def approve_rentals(request):
+    if request.user.profile.role != 'librarian':
+        messages.error(request, "Only librarians can approve rentals.")
+        return redirect('home')
+    
     if request.method == 'POST':
-        notification = get_object_or_404(Notification, id=notification_id, user=request.user)
-        notification.read = True
-        notification.save()
-        return JsonResponse({'status': 'success'})
-    return JsonResponse({'status': 'error'}, status=400)
+        rental_id = request.POST.get('rental_id')
+        action = request.POST.get('action')
+        
+        if rental_id and action:
+            rental = get_object_or_404(Rental, id=rental_id)
+            
+            if action == 'approve':
+                # Process payment
+                payment_successful = process_mock_payment(rental.book.rental_price, rental.payment_id)
+                
+                if payment_successful:
+                    rental.status = 'active'
+                    rental.save()
+                    
+                    # Add book to user's library
+                    user_library, _ = UserLibrary.objects.get_or_create(user=rental.user)
+                    user_library.books.add(rental.book)
+                    
+                    messages.success(request, f"Rental approved for {rental.user.username}")
+                else:
+                    rental.status = 'cancelled'
+                    rental.save()
+                    messages.error(request, "Payment processing failed")
+            
+            elif action == 'reject':
+                rental.status = 'rejected'
+                rental.save()
+                messages.success(request, f"Rental rejected for {rental.user.username}")
+    
+    pending_rentals = Rental.objects.filter(status='pending_approval').select_related('user', 'book')
+    return render(request, 'library/approve_rentals.html', {
+        'pending_rentals': pending_rentals
+    })

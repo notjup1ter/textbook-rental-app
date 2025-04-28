@@ -85,19 +85,7 @@
                         {% endif %}
                         <div style="margin-top: 0.25rem; font-size: 0.9rem;">
                             <span>${{ book.rental_price }} for {{ book.rental_duration_days }} minutes</span>
-                            <span class="condition-badge" style="
-                                display: inline-block;
-                                padding: 0.25rem 0.5rem;
-                                border-radius: 4px;
-                                background-color: {% if book.condition == 'new' %}#28a745
-                                    {% elif book.condition == 'excellent' %}#20c997
-                                    {% elif book.condition == 'good' %}#17a2b8
-                                    {% elif book.condition == 'fair' %}#ffc107
-                                    {% else %}#dc3545{% endif %};
-                                color: {% if book.condition == 'fair' %}#000{% else %}#fff{% endif %};
-                                font-size: 0.8rem;
-                                margin-left: 0.5rem;
-                            ">
+                            <span class="condition-badge {{ book.condition }}">
                                 {{ book.get_condition_display }}
                             </span>
                         </div>

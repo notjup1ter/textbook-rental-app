@@ -3,168 +3,100 @@
 {% block title %}{{ collection.title }}{% endblock %}
 
 {% block content %}
-<div class="collection-header">
-    <h1>{{ collection.title }}</h1>
-    <p>{{ collection.description }}</p>
-    
-    <!-- Add search bar for collection contents -->
-    {% if can_view_contents %}
-    <div class="search-container card" style="margin: 1rem 0; padding: 1rem;">
-        <form method="get" class="search-form" style="display: flex; gap: 1rem;">
-            <input 
-                type="text" 
-                name="q" 
-                class="form-control" 
-                placeholder="Search within this collection..." 
-                value="{{ query|default:'' }}"
-                style="flex: 1;"
-            >
-            <button type="submit" class="btn btn-primary">Search</button>
-            {% if query %}
-                <a href="{% url 'collection_detail' collection.id %}" class="btn btn-outline">Clear</a>
-            {% endif %}
-        </form>
-    </div>
-    
-    {% if query %}
-        <div class="search-results-info" style="margin-bottom: 1rem;">
-            <p>Showing results for "{{ query }}" 
-               ({{ viewable_books|length|add:non_viewable_books|length }} found)</p>
-        </div>
-    {% endif %}
-    {% endif %}
-    
-    <div class="collection-meta">
-        <span>Created by {{ collection.user.username }} |</span>
-        {% if collection.is_private %}
-            <span class="badge private-badge">Private Collection | </span>
-            {% if can_view_contents %}
-                <span class="badge access-badge" style="background-color: #28a745; margin-left: 0.5rem;">
-                    {% if is_owner %}
-                        You are the owner
-                    {% elif is_librarian %}
-                        Librarian access
-                    {% else %}
-                        You have access
-                    {% endif %}
-                </span>
-            {% endif %}
-        {% endif %}
+<div class="collection-container">
+    <div class="collection-header">
+        <h1>{{ collection.title }}</h1>
+        <p class="collection-description">{{ collection.description }}</p>
+        <p class="collection-meta">Created by {{ collection.user.username }} on {{ collection.created_at|date:"F j, Y" }}</p>
         
-        <!-- Modified delete button section -->
-        {% if is_owner or is_librarian %}
-            <form method="post" action="{% url 'delete_collection' collection.id %}" style="display: inline; margin-left: 1rem;">
-                {% csrf_token %}
-                <button type="submit" class="btn btn-danger" 
-                        onclick="return confirm('Are you sure you want to delete this collection? This action cannot be undone.')">
-                    Delete Collection
-                </button>
+        <!-- Add search bar for collection contents -->
+        {% if can_view_contents %}
+        <div class="search-container card" style="margin: 1rem 0; padding: 1rem;">
+            <form method="get" class="search-form" style="display: flex; gap: 1rem;">
+                <input 
+                    type="text" 
+                    name="q" 
+                    class="form-control" 
+                    placeholder="Search within this collection..." 
+                    value="{{ query|default:'' }}"
+                    style="flex: 1;"
+                >
+                <button type="submit" class="btn btn-primary">Search</button>
+                {% if query %}
+                    <a href="{% url 'collection_detail' collection.id %}" class="btn btn-outline">Clear</a>
+                {% endif %}
             </form>
+        </div>
+        
+        {% if query %}
+            <div class="search-results-info" style="margin-bottom: 1rem;">
+                <p>Showing results for "{{ query }}" 
+                   ({{ viewable_books|length|add:non_viewable_books|length }} found)</p>
+            </div>
+        {% endif %}
+        {% endif %}
+        
+        <div class="collection-meta">
+            <span>Created by {{ collection.user.username }} |</span>
+            {% if collection.is_private %}
+                <span class="badge private-badge">Private Collection | </span>
+                {% if can_view_contents %}
+                    <span class="badge access-badge" style="background-color: #28a745; margin-left: 0.5rem;">
+                        {% if is_owner %}
+                            You are the owner
+                        {% elif is_librarian %}
+                            Librarian access
+                        {% else %}
+                            You have access
+                        {% endif %}
+                    </span>
+                {% endif %}
+            {% endif %}
+            
+            <!-- Modified delete button section -->
+            {% if is_owner or is_librarian %}
+                <form method="post" action="{% url 'delete_collection' collection.id %}" style="display: inline; margin-left: 1rem;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger" 
+                            onclick="return confirm('Are you sure you want to delete this collection? This action cannot be undone.')">
+                        Delete Collection
+                    </button>
+                </form>
+            {% endif %}
+        </div>
+
+        {% if collection.is_private and not can_view_contents and user.profile.role == 'patron' %}
+            <div class="private-collection-notice">
+                <p>This is a private collection. You can request access to view its contents.</p>
+                {% if not has_requested_access %}
+                    <form method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="request_access" value="true">
+                        <button type="submit" class="btn btn-primary">Request Access</button>
+                    </form>
+                {% else %}
+                    <p class="text-muted">Access request pending</p>
+                {% endif %}
+            </div>
         {% endif %}
     </div>
 
-    {% if collection.is_private and not can_view_contents and user.profile.role == 'patron' %}
-        <div class="private-collection-notice">
-            <p>This is a private collection. You can request access to view its contents.</p>
-            {% if not has_requested_access %}
-                <form method="post">
-                    {% csrf_token %}
-                    <input type="hidden" name="request_access" value="true">
-                    <button type="submit" class="btn btn-primary">Request Access</button>
-                </form>
-            {% else %}
-                <p class="text-muted">Access request pending</p>
-            {% endif %}
+    {% if not user.is_authenticated and not collection.is_private %}
+        <div class="alert alert-info" style="margin-bottom: 1rem;">
+            <p>Sign in to rent books and create your own collections!</p>
+            <div style="margin-top: 1rem;">
+                <a href="{% url 'login' %}" class="btn btn-primary">Sign In</a>
+                <a href="{% url 'register' %}" class="btn btn-outline">Register</a>
+            </div>
         </div>
     {% endif %}
-</div>
 
-{% if not user.is_authenticated and not collection.is_private %}
-    <div class="alert alert-info" style="margin-bottom: 1rem;">
-        <p>Sign in to rent books and create your own collections!</p>
-        <div style="margin-top: 1rem;">
-            <a href="{% url 'login' %}" class="btn btn-primary">Sign In</a>
-            <a href="{% url 'register' %}" class="btn btn-outline">Register</a>
-        </div>
-    </div>
-{% endif %}
-
-{% if can_view_contents %}
-    <div class="card">
-        <h2 class="card-title">Books in this Collection</h2>
-        
-        {% if not user.is_authenticated %}
-            <div class="book-list">
-                {% for book in non_viewable_books %}
-                <li class="book-item">
-                    {% if book.cover_image %}
-                    <img src="{{ book.cover_image.url }}" alt="{{ book.title }} cover" class="book-cover">
-                    {% else %}
-                    <div class="book-cover" style="background-color: #e9ecef; display: flex; align-items: center; justify-content: center;">
-                        <span style="font-size: 3rem; color: #adb5bd;">📖</span>
-                    </div>
-                    {% endif %}
-                    
-                    <div class="book-info">
-                        <h3 class="book-title">{{ book.title }}</h3>
-                        <p class="book-author">by {{ book.author }}</p>
-                        <p style="margin-top: 0.5rem; color: var(--text-light);">
-                            Sign in to rent and view this book
-                        </p>
-                    </div>
-                    
-                    <div class="book-actions">
-                        <a href="{% url 'login' %}" class="btn btn-primary">Sign in to Rent</a>
-                    </div>
-                </li>
-                {% endfor %}
-            </div>
-        {% else %}
-            {% if viewable_books %}
-                <h3>Books You Can Access</h3>
-                <ul class="book-list">
-                    {% for book in viewable_books %}
-                    <li class="book-item">
-                        {% if book.cover_image %}
-                        <img src="{{ book.cover_image.url }}" alt="{{ book.title }} cover" class="book-cover">
-                        {% else %}
-                        <div class="book-cover" style="background-color: #e9ecef; display: flex; align-items: center; justify-content: center;">
-                            <span style="font-size: 3rem; color: #adb5bd;">📖</span>
-                        </div>
-                        {% endif %}
-                        
-                        <div class="book-info">
-                            <h3 class="book-title">
-                                <a href="{% url 'book_detail' book.id %}" style="color: inherit; text-decoration: none;">
-                                    {{ book.title }}
-                                </a>
-                            </h3>
-                            <p class="book-author">by {{ book.author }}</p>
-                            {% if book.pdf_file %}
-                            <div style="margin-top: 0.5rem;">
-                                <a href="{% url 'book_detail' book.id %}" class="btn btn-outline" style="font-size: 0.9rem;">
-                                    📄 View Book
-                                </a>
-                            </div>
-                            {% endif %}
-                        </div>
-                        
-                        <div class="book-actions">
-                            {% if is_librarian or collection.user == user %}
-                                <form method="post" action="{% url 'remove_from_collection' collection.id book.id %}" style="display: inline;">
-                                    {% csrf_token %}
-                                    <button type="submit" class="btn btn-danger" onclick="return confirm('Remove this book from the collection?')">Remove</button>
-                                </form>
-                            {% endif %}
-                        </div>
-                    </li>
-                    {% endfor %}
-                </ul>
-            {% endif %}
-
-            {% if non_viewable_books %}
-                <h3>Other Books in Collection</h3>
-                <ul class="book-list">
+    {% if can_view_contents %}
+        <div class="card">
+            <h2 class="card-title">Books in this Collection</h2>
+            
+            {% if not user.is_authenticated %}
+                <div class="book-list">
                     {% for book in non_viewable_books %}
                     <li class="book-item">
                         {% if book.cover_image %}
@@ -176,125 +108,196 @@
                         {% endif %}
                         
                         <div class="book-info">
-                            <span class="book-title">
-                                <a href="{% url 'book_detail' book.id %}" style="color: inherit; text-decoration: none;">
-                                    {{ book.title }}
-                                </a>
-                            </span>
-                            <span class="book-author">by {{ book.author }}</span>
+                            <h3 class="book-title">{{ book.title }}</h3>
+                            <p class="book-author">by {{ book.author }}</p>
                             <p style="margin-top: 0.5rem; color: var(--text-light);">
-                                Rent this book to view its content
+                                Sign in to rent and view this book
                             </p>
-                            <div style="margin-top: 0.5rem;">
-                                <a href="{% url 'rent_book' book.id %}" class="btn btn-primary">Rent Book</a>
-                            </div>
                         </div>
-
+                        
                         <div class="book-actions">
-                            {% if is_librarian or collection.user == user %}
-                                <form method="post" action="{% url 'remove_from_collection' collection.id book.id %}" style="display: inline;">
-                                    {% csrf_token %}
-                                    <button type="submit" class="btn btn-danger" onclick="return confirm('Remove this book from the collection?')">Remove</button>
-                                </form>
-                            {% endif %}
+                            <a href="{% url 'login' %}" class="btn btn-primary">Sign in to Rent</a>
                         </div>
                     </li>
                     {% endfor %}
-                </ul>
-            {% endif %}
-        {% endif %}
-    </div>
-
-    {% if user.profile.role == 'librarian' and collection.is_private %}
-        <div class="card" style="margin-top: 2rem;">
-            <h3>Manage Collection Access</h3>
-            
-            <!-- Current Allowed Users -->
-            <div class="allowed-users" style="margin-bottom: 2rem;">
-                <h4>Current Allowed Users</h4>
-                {% if current_allowed_users %}
-                    <ul class="user-list">
-                        {% for allowed_user in current_allowed_users %}
-                            <li style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-                                {{ allowed_user.username }}
-                                <form method="post" style="display: inline;">
-                                    {% csrf_token %}
-                                    <input type="hidden" name="action" value="remove_user">
-                                    <input type="hidden" name="user_id" value="{{ allowed_user.id }}">
-                                    <button type="submit" class="btn btn-danger btn-sm">Remove Access</button>
-                                </form>
-                            </li>
-                        {% endfor %}
-                    </ul>
-                {% else %}
-                    <p>No users currently have access</p>
-                {% endif %}
-            </div>
-
-            <!-- Access Requests -->
-            <div class="access-requests" style="margin-bottom: 2rem;">
-                <h4>Pending Access Requests</h4>
-                {% if access_requests %}
-                    <ul class="user-list">
-                        {% for requester in access_requests %}
-                            <li style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-                                {{ requester.username }}
-                                <div>
-                                    <form method="post" style="display: inline;">
-                                        {% csrf_token %}
-                                        <input type="hidden" name="action" value="add_user">
-                                        <input type="hidden" name="user_id" value="{{ requester.id }}">
-                                        <button type="submit" class="btn btn-success btn-sm">Approve</button>
-                                    </form>
-                                    <form method="post" style="display: inline;">
-                                        {% csrf_token %}
-                                        <input type="hidden" name="action" value="reject_request">
-                                        <input type="hidden" name="user_id" value="{{ requester.id }}">
-                                        <button type="submit" class="btn btn-danger btn-sm">Reject</button>
-                                    </form>
+                </div>
+            {% else %}
+                {% if viewable_books %}
+                    <h3>Books You Can Access</h3>
+                    <ul class="book-list">
+                        {% for book in viewable_books %}
+                        <li class="book-item">
+                            {% if book.cover_image %}
+                            <img src="{{ book.cover_image.url }}" alt="{{ book.title }} cover" class="book-cover">
+                            {% else %}
+                            <div class="book-cover" style="background-color: #e9ecef; display: flex; align-items: center; justify-content: center;">
+                                <span style="font-size: 3rem; color: #adb5bd;">📖</span>
+                            </div>
+                            {% endif %}
+                            
+                            <div class="book-info">
+                                <h3 class="book-title">
+                                    <a href="{% url 'book_detail' book.id %}" style="color: inherit; text-decoration: none;">
+                                        {{ book.title }}
+                                    </a>
+                                </h3>
+                                <p class="book-author">by {{ book.author }}</p>
+                                {% if book.pdf_file %}
+                                <div style="margin-top: 0.5rem;">
+                                    <a href="{% url 'book_detail' book.id %}" class="btn btn-outline" style="font-size: 0.9rem;">
+                                        📄 View Book
+                                    </a>
                                 </div>
-                            </li>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="book-actions">
+                                {% if is_librarian or collection.user == user %}
+                                    <form method="post" action="{% url 'remove_from_collection' collection.id book.id %}" style="display: inline;">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-danger" onclick="return confirm('Remove this book from the collection?')">Remove</button>
+                                    </form>
+                                {% endif %}
+                            </div>
+                        </li>
                         {% endfor %}
                     </ul>
-                {% else %}
-                    <p>No pending access requests</p>
                 {% endif %}
-            </div>
 
-            <!-- Add New Users -->
-            <div class="add-users">
-                <h4>Add New Users</h4>
-                {% if available_users %}
-                    <form method="post">
-                        {% csrf_token %}
-                        <input type="hidden" name="action" value="add_user">
-                        <select name="user_id" class="form-control" style="margin-bottom: 1rem;">
-                            <option value="">Select a user...</option>
-                            {% for user in available_users %}
-                                <option value="{{ user.id }}">{{ user.username }}</option>
+                {% if non_viewable_books %}
+                    <h3>Other Books in Collection</h3>
+                    <ul class="book-list">
+                        {% for book in non_viewable_books %}
+                        <li class="book-item">
+                            {% if book.cover_image %}
+                            <img src="{{ book.cover_image.url }}" alt="{{ book.title }} cover" class="book-cover">
+                            {% else %}
+                            <div class="book-cover" style="background-color: #e9ecef; display: flex; align-items: center; justify-content: center;">
+                                <span style="font-size: 3rem; color: #adb5bd;">📖</span>
+                            </div>
+                            {% endif %}
+                            
+                            <div class="book-info">
+                                <span class="book-title">
+                                    <a href="{% url 'book_detail' book.id %}" style="color: inherit; text-decoration: none;">
+                                        {{ book.title }}
+                                    </a>
+                                </span>
+                                <span class="book-author">by {{ book.author }}</span>
+                                <p style="margin-top: 0.5rem; color: var(--text-light);">
+                                    Rent this book to view its content
+                                </p>
+                                <div style="margin-top: 0.5rem;">
+                                    <a href="{% url 'rent_book' book.id %}" class="btn btn-primary">Rent Book</a>
+                                </div>
+                            </div>
+
+                            <div class="book-actions">
+                                {% if is_librarian or collection.user == user %}
+                                    <form method="post" action="{% url 'remove_from_collection' collection.id book.id %}" style="display: inline;">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-danger" onclick="return confirm('Remove this book from the collection?')">Remove</button>
+                                    </form>
+                                {% endif %}
+                            </div>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            {% endif %}
+        </div>
+
+        {% if user.profile.role == 'librarian' and collection.is_private %}
+            <div class="card" style="margin-top: 2rem;">
+                <h3>Manage Collection Access</h3>
+                
+                <!-- Current Allowed Users -->
+                <div class="allowed-users" style="margin-bottom: 2rem;">
+                    <h4>Current Allowed Users</h4>
+                    {% if current_allowed_users %}
+                        <ul class="user-list">
+                            {% for allowed_user in current_allowed_users %}
+                                <li style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                                    {{ allowed_user.username }}
+                                    <form method="post" style="display: inline;">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="action" value="remove_user">
+                                        <input type="hidden" name="user_id" value="{{ allowed_user.id }}">
+                                        <button type="submit" class="btn btn-danger btn-sm">Remove Access</button>
+                                    </form>
+                                </li>
                             {% endfor %}
-                        </select>
-                        <button type="submit" class="btn btn-primary">Add User</button>
+                        </ul>
+                    {% else %}
+                        <p>No users currently have access</p>
+                    {% endif %}
+                </div>
+
+                <!-- Access Requests -->
+                <div class="access-requests" style="margin-bottom: 2rem;">
+                    <h4>Pending Access Requests</h4>
+                    {% if access_requests %}
+                        <ul class="user-list">
+                            {% for requester in access_requests %}
+                                <li style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                                    {{ requester.username }}
+                                    <div>
+                                        <form method="post" style="display: inline;">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="action" value="add_user">
+                                            <input type="hidden" name="user_id" value="{{ requester.id }}">
+                                            <button type="submit" class="btn btn-success btn-sm">Approve</button>
+                                        </form>
+                                        <form method="post" style="display: inline;">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="action" value="reject_request">
+                                            <input type="hidden" name="user_id" value="{{ requester.id }}">
+                                            <button type="submit" class="btn btn-danger btn-sm">Reject</button>
+                                        </form>
+                                    </div>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p>No pending access requests</p>
+                    {% endif %}
+                </div>
+
+                <!-- Add New Users -->
+                <div class="add-users">
+                    <h4>Add New Users</h4>
+                    {% if available_users %}
+                        <form method="post">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="add_user">
+                            <select name="user_id" class="form-control" style="margin-bottom: 1rem;">
+                                <option value="">Select a user...</option>
+                                {% for user in available_users %}
+                                    <option value="{{ user.id }}">{{ user.username }}</option>
+                                {% endfor %}
+                            </select>
+                            <button type="submit" class="btn btn-primary">Add User</button>
+                        </form>
+                    {% else %}
+                        <p>No more users available to add</p>
+                    {% endif %}
+                </div>
+            </div>
+        {% endif %}
+    {% else %}
+        <div class="card">
+            <div class="private-collection-notice" style="text-align: center; padding: 2rem;">
+                <h3>Private Collection</h3>
+                <p>This collection's contents are only visible to authorized users.</p>
+                {% if not has_requested_access and user.profile.role == 'patron' %}
+                    <form method="post" style="margin-top: 1rem;">
+                        {% csrf_token %}
+                        <input type="hidden" name="request_access" value="true">
+                        <button type="submit" class="btn btn-primary">Request Access</button>
                     </form>
-                {% else %}
-                    <p>No more users available to add</p>
                 {% endif %}
             </div>
         </div>
     {% endif %}
-{% else %}
-    <div class="card">
-        <div class="private-collection-notice" style="text-align: center; padding: 2rem;">
-            <h3>Private Collection</h3>
-            <p>This collection's contents are only visible to authorized users.</p>
-            {% if not has_requested_access and user.profile.role == 'patron' %}
-                <form method="post" style="margin-top: 1rem;">
-                    {% csrf_token %}
-                    <input type="hidden" name="request_access" value="true">
-                    <button type="submit" class="btn btn-primary">Request Access</button>
-                </form>
-            {% endif %}
-        </div>
-    </div>
-{% endif %}
+</div>
 {% endblock %} 

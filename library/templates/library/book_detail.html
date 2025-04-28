@@ -3,132 +3,107 @@
 {% block title %}{{ book.title }}{% endblock %}
 
 {% block content %}
-<div class="card">
-    <div class="book-detail" style="display: grid; grid-template-columns: 300px 1fr; gap: 2rem;">
-        <div class="book-image">
+<div class="book-detail-container" style="max-width: 1200px; margin: 0 auto; padding: 2rem;">
+    <div class="book-header" style="display: grid; grid-template-columns: 300px 1fr; gap: 2rem; margin-bottom: 2rem; background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); padding: 2rem;">
+        <div class="book-cover" style="width: 100%;">
             {% if book.cover_image %}
-            <img src="{{ book.cover_image.url }}" alt="{{ book.title }} cover" style="width: 100%; height: auto; border-radius: 8px;">
+                <img src="{{ book.cover_image.url }}" alt="{{ book.title }} cover" style="width: 100%; height: auto; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
             {% else %}
-            <div style="width: 100%; height: 400px; background-color: #e9ecef; display: flex; align-items: center; justify-content: center; border-radius: 8px;">
-                <span style="font-size: 4rem; color: #adb5bd;">📖</span>
-            </div>
+                <div class="book-cover-placeholder" style="width: 100%; aspect-ratio: 2/3; background-color: #e9ecef; display: flex; align-items: center; justify-content: center; border-radius: 8px;">
+                    <span style="font-size: 4rem; color: #adb5bd;">📖</span>
+                </div>
             {% endif %}
         </div>
-        
-        <div class="book-info">
-            <h1>{{ book.title }}</h1>
-            <h3 style="color: var(--text-light);">by {{ book.author }}</h3>
-            
-            <div style="margin: 1rem 0;">
-                <span class="condition-badge" style="
-                    display: inline-block;
-                    padding: 0.5rem 1rem;
-                    border-radius: 4px;
-                    background-color: {% if book.condition == 'new' %}#28a745
-                        {% elif book.condition == 'excellent' %}#20c997
-                        {% elif book.condition == 'good' %}#17a2b8
-                        {% elif book.condition == 'fair' %}#ffc107
-                        {% else %}#dc3545{% endif %};
-                    color: {% if book.condition == 'fair' %}#000{% else %}#fff{% endif %};
-                ">
-                    {{ book.get_condition_display }}
-                </span>
-                <span style="margin-left: 1rem; font-size: 1.2rem;">${{ book.rental_price }} for {{ book.rental_duration_days }} minutes</span>
-            </div>
-
-            {% if book.description %}
-            <div style="margin: 1.5rem 0;">
-                <h4>Description</h4>
-                <p>{{ book.description }}</p>
-            </div>
-            {% endif %}
-
-            <div style="margin: 1.5rem 0;">
-                <h4>ISBN</h4>
-                <p>{{ book.isbn }}</p>
-            </div>
-
-            {% with collections=book.collection_set.all %}
-            <div style="margin: 1.5rem 0;">
-                <h4>Collections</h4>
-                {% if collections %}
-                <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.5rem;">
-                    {% for collection in collections %}
-                    <a href="{% url 'collection_detail' collection.id %}" style="text-decoration: none;">
-                        <span style="
-                            display: inline-block;
-                            background-color: var(--primary-color);
-                            color: white;
-                            padding: 0.5rem 1rem;
-                            border-radius: 20px;
-                            font-size: 0.9rem;
-                        ">
-                            {{ collection.title }} (by {{ collection.user.username }})
-                        </span>
-                    </a>
-                    {% endfor %}
+        <div class="book-info" style="display: flex; flex-direction: column; justify-content: space-between;">
+            <div>
+                <h1 style="font-size: 2.5rem; margin-bottom: 0.5rem; color: var(--dark-color);">{{ book.title }}</h1>
+                <p class="book-author" style="font-size: 1.2rem; color: var(--text-light); margin-bottom: 1rem;">by {{ book.author }}</p>
+                <div class="book-meta" style="display: flex; gap: 1rem; margin-bottom: 1.5rem;">
+                    <span class="condition-badge {{ book.condition }}" style="font-size: 1rem;">
+                        {{ book.get_condition_display }}
+                    </span>
+                    <span class="rental-price" style="font-size: 1rem; background: var(--primary-color); color: white; padding: 0.25rem 0.75rem; border-radius: 20px;">${{ book.rental_price }} for {{ book.rental_duration_days }} minutes</span>
                 </div>
-                {% else %}
-                <p style="color: var(--text-light);">This book is not in any collections yet.</p>
+                {% if book.description %}
+                <div class="book-description" style="margin-bottom: 1.5rem;">
+                    <h2 style="font-size: 1.2rem; margin-bottom: 0.5rem;">Description</h2>
+                    <p style="line-height: 1.6; color: var(--text-color);">{{ book.description }}</p>
+                </div>
                 {% endif %}
             </div>
-            {% endwith %}
-
-            <div class="book-actions" style="margin-top: 2rem;">
+            <div class="book-actions" style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                {% if book in user_library_books %}
+                    <span class="in-library" style="background: var(--success-color); color: white; padding: 0.5rem 1rem; border-radius: 25px; display: inline-flex; align-items: center; gap: 0.5rem;">
+                        <span style="font-size: 1.2rem;">✓</span> In Your Library
+                    </span>
+                {% else %}
+                    <a href="{% url 'rent_book' book.id %}" class="btn btn-primary" style="flex: 1; min-width: 150px;">Rent Book</a>
+                {% endif %}
+                
                 {% if user.is_authenticated %}
-                    {% if book in user_library_books %}
-                        <span class="in-library">✓ In Your Library</span>
-                        {% if book.pdf_file %}
-                        <a href="{% url 'view_pdf' book.id %}" class="btn btn-primary">Download PDF</a>
-                        {% endif %}
-                    {% else %}
-                        <a href="{% url 'rent_book' book.id %}" class="btn btn-primary">Rent Book</a>
-                    {% endif %}
-                {% else %}
-                    <div style="text-align: center; padding: 1rem; background-color: #f8f9fa; border-radius: 8px;">
-                        <p style="margin-bottom: 1rem;">Please log in to rent this book or access its content.</p>
-                        <a href="{% url 'login' %}?next={{ request.path }}" class="btn btn-primary">Log In</a>
-                        <a href="{% url 'register' %}" class="btn btn-outline" style="margin-left: 0.5rem;">Register</a>
-                    </div>
-                {% endif %}
-            </div>
-
-            {% if user.is_authenticated %}
-                {% if rating_form %}
-                <div style="margin-top: 2rem;">
-                    <h4>Rate this Book</h4>
-                    <form method="post">
+                <div class="dropdown" style="flex: 2;">
+                    <form method="post" action="{% url 'add_to_collection' book.id %}" style="display: flex; gap: 1rem;">
                         {% csrf_token %}
-                        {{ rating_form.as_p }}
-                        <button type="submit" class="btn btn-primary">Submit Rating</button>
+                        <select name="collection_id" class="form-control" style="flex: 2;" required>
+                            <option value="">Add to Collection...</option>
+                            {% for collection in user_collections %}
+                            <option value="{{ collection.id }}">{{ collection.title }}</option>
+                            {% endfor %}
+                        </select>
+                        <button type="submit" class="btn btn-outline" style="flex: 1;">Add</button>
                     </form>
                 </div>
                 {% endif %}
-            {% else %}
-                <div style="margin-top: 2rem;">
-                    <h4>Ratings & Reviews</h4>
-                    <p style="color: var(--text-light);">Log in to rate this book.</p>
-                </div>
-            {% endif %}
-
-            {% if ratings %}
-            <div style="margin-top: 2rem;">
-                <h4>Ratings & Reviews</h4>
-                {% for rating in ratings %}
-                <div style="margin: 1rem 0; padding: 1rem; background-color: #f8f9fa; border-radius: 8px;">
-                    <div style="display: flex; justify-content: space-between;">
-                        <strong>{{ rating.user.username }}</strong>
-                        <span>{{ rating.rating }} / 5</span>
-                    </div>
-                    {% if rating.comment %}
-                    <p style="margin-top: 0.5rem;">{{ rating.comment }}</p>
-                    {% endif %}
-                    <small style="color: var(--text-light);">{{ rating.created_at|date:"F j, Y" }}</small>
-                </div>
-                {% endfor %}
             </div>
-            {% endif %}
         </div>
     </div>
+
+    {% if book.pdf_file and book in user_library_books %}
+    <div class="pdf-viewer" style="background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); padding: 2rem; margin-bottom: 2rem;">
+        <h2 style="margin-bottom: 1rem;">Book Preview</h2>
+        <div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden;">
+            <iframe src="{{ book.pdf_file.url }}" style="position: absolute; top: 0; left: 0; width: 100%; height: 800px; border: none; border-radius: 8px;"></iframe>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if ratings %}
+    <div class="book-ratings" style="background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); padding: 2rem;">
+        <h2 style="margin-bottom: 1.5rem;">Ratings & Reviews</h2>
+        <div style="display: grid; gap: 1.5rem;">
+            {% for rating in ratings %}
+            <div class="rating-item" style="border-bottom: 1px solid #eee; padding-bottom: 1.5rem;">
+                <div class="rating-header" style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                    <span class="rating-user" style="font-weight: 500;">{{ rating.user.username }}</span>
+                    <span class="rating-date" style="color: var(--text-light);">{{ rating.created_at|date:"F j, Y" }}</span>
+                </div>
+                <div class="rating-stars" style="color: #ffd700; font-size: 1.2rem; margin-bottom: 0.5rem;">
+                    {% for i in "12345"|make_list %}
+                        {% if forloop.counter <= rating.rating %}
+                            ★
+                        {% else %}
+                            ☆
+                        {% endif %}
+                    {% endfor %}
+                </div>
+                {% if rating.comment %}
+                <p class="rating-comment" style="line-height: 1.6; color: var(--text-color);">{{ rating.comment }}</p>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    {% if user.is_authenticated and not user_rating %}
+    <div class="rating-form" style="background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); padding: 2rem; margin-top: 2rem;">
+        <h2 style="margin-bottom: 1.5rem;">Add Your Rating</h2>
+        <form method="post">
+            {% csrf_token %}
+            {{ rating_form.as_p }}
+            <button type="submit" class="btn btn-primary" style="margin-top: 1rem;">Submit Rating</button>
+        </form>
+    </div>
+    {% endif %}
 </div>
 {% endblock %} 

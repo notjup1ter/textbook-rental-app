@@ -32,8 +32,8 @@
                 <span class="book-title">{{ book.title }}</span>
                 <span class="book-author">by {{ book.author }}</span>
                 {% if rental_times|get_item:book.id %}
-                <div class="rental-status" style="margin-top: 0.5rem;">
-                    <span style="color: {% if rental_times|get_item:book.id < 5 %}var(--danger-color){% else %}var(--success-color){% endif %};">
+                <div class="rental-status">
+                    <span class="{% if rental_times|get_item:book.id < 5 %}rental-warning{% else %}rental-normal{% endif %}">
                         {{ rental_times|get_item:book.id }} minutes remaining
                     </span>
                 </div>
@@ -41,14 +41,14 @@
             </div>
             
             <div class="book-actions">
-                <a href="{% url 'book_detail' book.id %}" class="btn btn-primary" style="width: 100%; margin-bottom: 0.5rem;">View Book</a>
+                <a href="{% url 'book_detail' book.id %}" class="btn btn-primary" style="width: 80%; margin-bottom: 0.5rem; margin-left: 0%; margin-right: 0%; text-align: center;">View Book</a>
                 {% if book.pdf_file %}
                 <a href="{% url 'view_pdf' book.id %}" class="btn btn-outline" style="width: 100%; margin-bottom: 0.5rem;">Download PDF</a>
                 {% endif %}
                 <form method="post" style="width: 100%;">
                     {% csrf_token %}
                     <input type="hidden" name="book_id" value="{{ book.id }}">
-                    <button type="submit" class="btn btn-danger" style="width: 100%;" 
+                    <button type="submit" class="btn btn-danger" style="width: 100%; margin-left: 10%; margin-right: 10%; margin-bottom: 0.5rem; text-align: center;" 
                             onclick="return confirm('Are you sure you want to remove this book from your library? This will cancel your rental.')">
                         Remove from Library
                     </button>

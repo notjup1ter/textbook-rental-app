@@ -99,17 +99,19 @@ class Collection(models.Model):
 
 class Rental(models.Model):
     RENTAL_STATUS = (
+        ('pending_approval', 'Pending Librarian Approval'),
         ('pending', 'Pending Payment'),
         ('active', 'Active'),
         ('expired', 'Expired'),
-        ('cancelled', 'Cancelled')
+        ('cancelled', 'Cancelled'),
+        ('rejected', 'Rejected')
     )
     
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     book = models.ForeignKey(Book, on_delete=models.CASCADE)
     start_date = models.DateTimeField(auto_now_add=True)
     end_date = models.DateTimeField()
-    status = models.CharField(max_length=10, choices=RENTAL_STATUS, default='pending')
+    status = models.CharField(max_length=20, choices=RENTAL_STATUS, default='pending')
     payment_id = models.CharField(max_length=100, blank=True, null=True)
 
     def days_remaining(self):
@@ -138,12 +140,14 @@ class FakeInvoice(models.Model):
 class Notification(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     message = models.CharField(max_length=255)
-    link = models.CharField(max_length=200, blank=True, help_text="URL or named route to link the notification to")
+    link = models.CharField(max_length=255, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
-    read = models.BooleanField(default=False)
+
+    class Meta:
+        ordering = ['-created_at']
 
     def __str__(self):
-        return f"{self.user.username} - {self.message}"
+        return f"{self.user.username} - {self.message[:50]}"
 
 class BookRating(models.Model):
     RATING_CHOICES = (

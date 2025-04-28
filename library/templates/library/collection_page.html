@@ -23,7 +23,7 @@
     </form>
 </div>
 
-<div class="dashboard-grid" style="display: grid; grid-template-columns: {% if user.is_authenticated %}1fr 2fr{% else %}1fr{% endif %}; gap: 2rem;">
+<div class="dashboard-grid {% if user.is_authenticated %}authenticated-grid{% else %}guest-grid{% endif %}">
     <!-- Create Collection Form - Only show for authenticated users -->
     {% if user.is_authenticated %}
     <div class="card">

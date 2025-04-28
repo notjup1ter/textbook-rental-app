@@ -20,26 +20,6 @@
   --nav-shadow: rgba(0, 0, 0, 0.1);
 }
 
-/* Dark Mode Variables */
-.theme-dark {
-  --primary-color: #4a6fa5;
-  --primary-dark: #345382;
-  --secondary-color: #f8b400;
-  --accent-color: #e14658;
-  --light-color: #1a1a1a;
-  --dark-color: #f5f7fa;
-  --text-color: #e0e0e0;
-  --text-light: #a0a0a0;
-  --success-color: #28a745;
-  --danger-color: #dc3545;
-  --danger-dark: #bd2130;
-  --border-radius: 8px;
-  --box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
-  background-color: #121212;
-  color: var(--text-color);
-  --nav-bg: #121212;
-  --nav-shadow: rgba(0, 0, 0, 0.3);
-}
 
 /* Base Styles */
 * {
@@ -77,6 +57,7 @@ h1 {
   position: relative;
   padding-bottom: 0.5rem;
   margin-bottom: 2rem;
+  margin-top: 2rem;
 }
 
 h1::after {
@@ -118,85 +99,102 @@ ul, ol {
 
 .main-content {
   flex: 1;
+  padding-top: 60px;
 }
 
 /* Navigation */
-nav {
-  background-color: var(--nav-bg) !important;
-  box-shadow: 0 2px 10px var(--nav-shadow) !important;
-  position: sticky;
-  top: 0;
-  z-index: 1000;
-  height: var(--header-height);
+
+nav.nav-primary {
+  background-color: white ;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1) ;
+  position: fixed ;
+  top: 0 ;
+  left: 0 ;
+  right: 0 ;
+  height: 60px ;
+  z-index: 1000 ;
 }
 
-.nav-container {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  max-width: var(--container-width);
-  margin: 0 auto;
-  padding: 0 2rem;
-  height: 100%;
+nav.nav-primary .nav-container {
+  display: flex ;
+  align-items: center ;
+  justify-content: space-between ;
+  max-width: 1000px ;
+  margin: 0 auto ;
+  padding: 0 1rem ;
+  height: 100% ;
+  width: 100% ;
 }
 
-.logo {
+nav.nav-primary .logo {
   font-weight: 700;
   font-size: 1.5rem;
   color: var(--primary-color);
+  padding: 0;
+  min-width: 150px;
+  margin-right: 1rem;
+  flex-shrink: 0;
 }
 
-.logo a {
+nav.nav-primary .logo a {
   text-decoration: none;
   color: inherit;
   display: flex;
   align-items: center;
+  transition: var(--transition);
 }
 
-.logo-icon {
-  margin-right: 0.5rem;
-  font-size: 1.8rem;
+nav.nav-primary .logo a:hover {
+  color: var(--primary-dark);
 }
 
-.nav-links {
+nav.nav-primary .nav-links {
   display: flex;
   list-style: none;
   margin: 0;
   padding: 0;
   align-items: center;
   height: 100%;
+  flex: 1;
+  justify-content: center;
+  gap: 0.5rem;
 }
 
-.nav-links li {
-  margin-left: 1.5rem;
-  height: 100%;
-  display: flex;
-  align-items: center;
+nav.nav-primary .nav-links li {
+  height: 100% ;
+  display: flex ;
+  align-items: center ;
+  min-width: 70px ;
+  justify-content: center ;
+  position: relative ;
 }
 
-.nav-links a {
-  color: var(--dark-color);
-  font-weight: 500;
-  padding: 0.5rem 0;
-  position: relative;
-  height: 100%;
-  display: flex;
-  align-items: center;
+nav.nav-primary .nav-links a {
+  color: var(--dark-color) ;
+  font-weight: 500 ;
+  text-decoration: none ;
+  padding: 0.5rem 0.5rem ;
+  height: 100% ;
+  display: flex ;
+  align-items: center ;
+  justify-content: center ;
+  width: 100% ;
+  transition: color 0.3s ease ;
+  font-size: 0.85rem ;
 }
 
-.nav-links a::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 0;
-  height: 2px;
-  background-color: var(--primary-color);
-  transition: var(--transition);
+nav.nav-primary .nav-links a:hover {
+  color: var(--primary-color);
 }
 
-.nav-links a:hover::after {
-  width: 100%;
+nav.nav-primary .nav-links .btn {
+  margin: 0.5rem;
+  height: auto;
+  min-width: auto;
+}
+
+nav.nav-primary .nav-links .btn-outline:hover {
+  color: white;
 }
 
 .user-section {
@@ -279,6 +277,7 @@ nav {
   background-color: transparent;
   border: 2px solid var(--primary-color);
   color: var(--primary-color);
+  height: 80%;
 }
 
 .btn-outline:hover {
@@ -410,6 +409,7 @@ nav {
   padding: 4rem 2rem;
   text-align: center;
   margin-bottom: 3rem;
+  margin-top: 60px;
   border-radius: var(--border-radius);
   background-image: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
   position: relative;
@@ -626,8 +626,15 @@ nav {
 /* Dashboard */
 .dashboard-grid {
   display: grid;
-  grid-template-columns: 1fr 2fr;
   gap: 2rem;
+}
+
+.authenticated-grid {
+  grid-template-columns: 1fr 2fr;
+}
+
+.guest-grid {
+  grid-template-columns: 1fr;
 }
 
 .empty-state {
@@ -703,26 +710,26 @@ footer {
   }
   
   .profile-container {
-    grid-template-columns: 1fr !important;
+    grid-template-columns: 1fr;
   }
 }
 
 @media (max-width: 768px) {
   .nav-container {
-    flex-direction: column;
-    padding: 1rem;
-    height: auto;
+    padding: 0 1rem;
   }
   
   .nav-links {
-    margin-top: 1rem;
-    flex-wrap: wrap;
-    justify-content: center;
-    width: 100%;
+    gap: 0.5rem;
   }
   
   .nav-links li {
-    margin: 0.5rem;
+    min-width: 100px;
+  }
+  
+  .logo {
+    min-width: 150px;
+    margin-right: 1rem;
   }
   
   .user-section {
@@ -838,379 +845,519 @@ input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focu
   flex: 1;
 }
 
-/* Toast Notification Styling */
-.toast-container {
+/* Toast Container */
+.notification-container {
     position: fixed;
-    top: 20px;          /* Changed from bottom to top */
+    top: 20px;
     right: 20px;
-    z-index: 9999;
+    z-index: 1000;
+    pointer-events: none;
     display: flex;
     flex-direction: column;
     gap: 10px;
-    pointer-events: none;
 }
 
-.toast-message {
-    padding: 1rem 2rem;
-    border-radius: 8px;
-    background-color: white;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    opacity: 0;
-    transform: translateX(100%);  /* Slide in from right */
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    min-width: 300px;
-    max-width: 400px;
+.notification {
+    background: white;
+    padding: 8px 16px;
+    border-radius: 4px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    margin-bottom: 8px;
     pointer-events: auto;
+    transform: translateX(120%);
+    opacity: 0;
+    transition: transform 0.3s ease-out, opacity 0.3s ease-out;
+    font-size: 0.9rem;
+    max-width: 300px;
+    display: flex;
+    align-items: center;
+}
+
+.notification.show {
+    transform: translateX(0);
+    opacity: 1;
+}
+
+.notification.success {
+    border-left: 3px solid #4CAF50;
+}
+
+.notification.error {
+    border-left: 3px solid #f44336;
+}
+
+.notification.warning {
+    border-left: 3px solid #ff9800;
+}
+
+.notification.info {
+    border-left: 3px solid #2196F3;
+}
+
+/* Collections */
+.collection-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 2rem;
+    margin-top: 2rem;
+}
+
+.collection-card {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    padding: 1.5rem;
+    transition: transform 0.2s;
+}
+
+.collection-card:hover {
+    transform: translateY(-5px);
+}
+
+.collection-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.collection-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+/* Rental Status */
+.rental-status {
+    margin-top: 0.5rem;
+}
+
+.rental-warning {
+    color: var(--danger-color);
+}
+
+.rental-normal {
+    color: var(--success-color);
+}
+
+/* Book List */
+.book-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 2rem;
+    margin-top: 2rem;
+}
+
+.book-item {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    padding: 1.5rem;
+    transition: transform 0.2s;
+}
+
+.book-item:hover {
+    transform: translateY(-5px);
+}
+
+.book-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-top: 1rem;
+}
+
+.in-library {
+    color: #28a745;
+    font-weight: 500;
+    text-align: center;
+}
+
+.rental-price {
+    text-align: center;
+    font-weight: 500;
+    color: var(--primary-color);
+}
+
+/* Empty States */
+.empty-state {
+    text-align: center;
+    padding: 3rem 1rem;
+}
+
+.empty-state-icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    color: var(--text-light);
+}
+
+/* Form Groups */
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+}
+
+.form-control {
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 1rem;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px rgba(var(--primary-color-rgb), 0.1);
+}
+
+/* Dropdown */
+.dropdown {
+    margin-top: 1rem;
+}
+
+.dropdown select {
+    width: 100%;
     margin-bottom: 0.5rem;
 }
 
-.toast-message.show {
-    opacity: 1;
-    transform: translateX(0);
+/* Collection Page Styles */
+.collection-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
 }
 
-.toast-message.success {
-    background-color: #28a745;
+.collection-header {
+    text-align: center;
+    margin-bottom: 3rem;
+}
+
+.collection-header h1 {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+    color: #333;
+}
+
+.collection-description {
+    font-size: 1.1rem;
+    color: #666;
+    margin-bottom: 1rem;
+    line-height: 1.6;
+}
+
+.collection-meta {
+    font-size: 0.9rem;
+    color: #888;
+}
+
+.collection-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 2rem;
+    margin-top: 2rem;
+}
+
+.collection-card {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    transition: transform 0.2s ease;
+}
+
+.collection-card:hover {
+    transform: translateY(-5px);
+}
+
+.book-cover {
+    height: 300px;
+    overflow: hidden;
+}
+
+.book-cover img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.book-cover-placeholder {
+    width: 100%;
+    height: 100%;
+    background: #f5f5f5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 3rem;
+}
+
+.book-info {
+    padding: 1.5rem;
+}
+
+.book-info h3 {
+    font-size: 1.2rem;
+    margin-bottom: 0.5rem;
+    color: #333;
+}
+
+.book-author {
+    color: #666;
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+}
+
+.book-details {
+    margin-bottom: 1rem;
+}
+
+.condition-badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    margin-right: 0.5rem;
+}
+
+.condition-badge.excellent {
+    background-color: #e3fcef;
+    color: #0e9f6e;
+}
+
+.condition-badge.good {
+    background-color: #e1f5fe;
+    color: #0288d1;
+}
+
+.condition-badge.fair {
+    background-color: #fff3e0;
+    color: #f57c00;
+}
+
+.rental-price {
+    color: #666;
+    font-size: 0.9rem;
+    margin-top: 0.5rem;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.empty-state-icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+}
+
+.empty-state h2 {
+    font-size: 1.5rem;
+    color: #333;
+    margin-bottom: 1rem;
+}
+
+.empty-state p {
+    color: #666;
+    font-size: 1.1rem;
+}
+
+/* My Library Styles */
+.library-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.library-header {
+    margin-bottom: 2rem;
+}
+
+.library-header h1 {
+    font-size: 2rem;
+    color: #333;
+    margin-bottom: 1rem;
+}
+
+.library-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 2rem;
+}
+
+.library-card {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    transition: transform 0.2s ease;
+}
+
+.library-card:hover {
+    transform: translateY(-5px);
+}
+
+/* My Pending Rentals Styles */
+.pending-rentals-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.pending-rentals-header {
+    margin-bottom: 2rem;
+}
+
+.pending-rentals-header h1 {
+    font-size: 2rem;
+    color: #333;
+    margin-bottom: 1rem;
+}
+
+.rental-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.rental-item {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    transition: transform 0.2s ease;
+}
+
+.rental-item:hover {
+    transform: translateY(-5px);
+}
+
+.rental-item img {
+    width: 100px;
+    height: 150px;
+    object-fit: cover;
+    border-radius: 4px;
+}
+
+.rental-info {
+    flex: 1;
+}
+
+.rental-info h3 {
+    font-size: 1.2rem;
+    margin-bottom: 0.5rem;
+    color: #333;
+}
+
+.rental-meta {
+    color: #666;
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+}
+
+.rental-status {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.rental-status.pending {
+    background-color: #fff3e0;
+    color: #f57c00;
+}
+
+.rental-status.active {
+    background-color: #e3fcef;
+    color: #0e9f6e;
+}
+
+.rental-status.expired {
+    background-color: #fee2e2;
+    color: #dc2626;
+}
+
+.rental-status.cancelled {
+    background-color: #f3f4f6;
+    color: #6b7280;
+}
+
+.rental-status.rejected {
+    background-color: #fee2e2;
+    color: #dc2626;
+}
+
+.rental-actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 1rem;
+}
+
+.rental-dates {
+    display: flex;
+    gap: 1rem;
+    margin-top: 0.5rem;
+    font-size: 0.9rem;
+    color: #666;
+}
+
+.rental-dates span {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.rental-dates i {
+    color: #4a6fa5;
+}
+
+.empty-rentals {
+    text-align: center;
+    padding: 3rem;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.empty-rentals i {
+    font-size: 3rem;
+    color: #9ca3af;
+    margin-bottom: 1rem;
+}
+
+.empty-rentals h3 {
+    color: #333;
+    margin-bottom: 0.5rem;
+}
+
+.empty-rentals p {
+    color: #666;
+}
+
+.status-badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
     color: white;
+    border-radius: 20px;
+    font-size: 0.9rem;
 }
 
-.toast-message.error {
+.status-expired {
     background-color: #dc3545;
-    color: white;
 }
 
-.toast-message.warning {
-    background-color: #ffc107;
-    color: #000;
+.status-cancelled {
+    background-color: #6c757d;
 }
 
-.toast-message.info {
-    background-color: #17a2b8;
-    color: white;
-}
-
-/* Dark mode specific overrides */
-.theme-dark .card-title {
-  color: white;
-}
-
-.theme-dark .card {
-  background-color: #121212 !important;
-  border: 1px solid #333;
-  color: #e0e0e0;
-}
-
-.theme-dark .nav {
-  background-color: var(--nav-bg) !important;
-  border-bottom: 1px solid #333 !important;
-  box-shadow: 0 2px 10px var(--nav-shadow) !important;
-}
-
-.theme-dark .nav-container {
-  background-color: #121212 !important;
-}
-
-.theme-dark .nav-links a {
-  color: #e0e0e0;
-}
-
-.theme-dark .nav-links a:hover {
-  color: var(--primary-color);
-}
-
-.theme-dark .nav-links a::after {
-  background-color: var(--primary-color);
-}
-
-.theme-dark .logo {
-  color: var(--primary-color);
-}
-
-.theme-dark .logo a {
-  color: var(--primary-color);
-}
-
-.theme-dark .btn-outline {
-  border-color: #e0e0e0;
-  color: #e0e0e0;
-}
-
-.theme-dark .btn-outline:hover {
-  background-color: #e0e0e0;
-  color: #1e1e1e;
-}
-
-.theme-dark .btn-primary {
-  background-color: var(--primary-color);
-  color: #ffffff;
-}
-
-.theme-dark .btn-primary:hover {
-  background-color: var(--primary-dark);
-}
-
-.theme-dark .form-control,
-.theme-dark input[type="text"],
-.theme-dark input[type="email"],
-.theme-dark input[type="password"],
-.theme-dark input[type="file"],
-.theme-dark textarea,
-.theme-dark select {
-  background-color: #2d2d2d;
-  border-color: #444;
-  color: var(--text-color);
-}
-
-.theme-dark .book-item {
-  background-color: #121212 !important;
-  border: 1px solid #333;
-  color: #e0e0e0;
-}
-
-.theme-dark .book-actions {
-  background-color: #1a1a1a !important;
-  border-top: 1px solid #333;
-}
-
-.theme-dark .footer {
-  background-color: #ffffff;
-  border-top: 1px solid #333;
-}
-
-.theme-dark .hero {
-  background-color: #ffffff;
-  background-image: linear-gradient(135deg, #1e1e1e 0%, #2d2d2d 100%);
-}
-
-.theme-dark .feature-card {
-  background-color: #121212 !important;
-  border: 1px solid #333;
-  color: #e0e0e0;
-}
-
-.theme-dark h1,
-.theme-dark h2,
-.theme-dark h3,
-.theme-dark h4,
-.theme-dark h5,
-.theme-dark h6,
-.theme-dark .card-title,
-.theme-dark .book-title,
-.theme-dark .feature-title {
-  color: #e0e0e0;
-}
-
-.theme-dark h1::after {
-  background-color: var(--primary-color);
-}
-
-.theme-dark .book-author,
-.theme-dark .detail-item span,
-.theme-dark small,
-.theme-dark .text-light {
-  color: #a0a0a0;
-}
-
-.theme-dark .footer-title {
-  color: #ffffff;
-}
-
-.theme-dark .divider::before,
-.theme-dark .divider::after {
-  background-color: #444;
-}
-
-.theme-dark .divider span {
-  color: var(--text-light);
-  background-color: #121212;
-}
-
-/* Update form backgrounds in dark mode */
-.theme-dark .profile-form {
-  background-color: #121212;
-}
-
-/* Update social login section */
-.theme-dark .social-login {
-  border-top: 1px solid #333;
-}
-
-/* Update divider background */
-.theme-dark .divider span {
-  background-color: #121212;
-}
-
-/* Force dark backgrounds for all card-like elements */
-.theme-dark .card,
-.theme-dark .book-item,
-.theme-dark .feature-card,
-.theme-dark .profile-form,
-.theme-dark .auth-container .card,
-.theme-dark .dashboard-grid .card,
-.theme-dark .empty-state,
-.theme-dark .book-actions,
-.theme-dark .social-login,
-.theme-dark form,
-.theme-dark .alert:not(.alert-danger) {
-    background-color: #121212 !important;
-    border: 1px solid #333;
-    color: #e0e0e0;
-}
-
-/* Override any white backgrounds that might be set inline or by other styles */
-.theme-dark [class*="bg-white"],
-.theme-dark [style*="background-color: white"],
-.theme-dark [style*="background-color: #fff"],
-.theme-dark [style*="background-color: #ffffff"] {
-    background-color: #121212 !important;
-}
-
-/* Additional dark mode overrides */
-.theme-dark * {
-    background-color: #121212 !important;
-}
-
-.theme-dark .card,
-.theme-dark .book-item,
-.theme-dark .feature-card,
-.theme-dark .profile-form,
-.theme-dark .auth-container .card,
-.theme-dark .dashboard-grid .card,
-.theme-dark .empty-state,
-.theme-dark .book-actions,
-.theme-dark .social-login,
-.theme-dark form,
-.theme-dark .alert:not(.alert-danger),
-.theme-dark div,
-.theme-dark section {
-    background-color: #121212 !important;
-}
-
-/* Exception for specific elements that need different backgrounds */
-.theme-dark .btn,
-.theme-dark .form-control,
-.theme-dark input,
-.theme-dark select,
-.theme-dark textarea {
-    background-color: #2d2d2d !important;
-}
-
-.theme-dark .nav {
-    background-color: #121212 !important;
-}
-
-/* Force dark backgrounds for book and collection cards */
-.theme-dark .book-item,
-.theme-dark .book-info,
-.theme-dark .collection-item,
-.theme-dark .book-list > li,
-.theme-dark .book-list > div,
-.theme-dark .dashboard-grid .card,
-.theme-dark .dashboard-grid .book-item {
-    background-color: #121212 !important;
-    border: 1px solid #333;
-    color: #e0e0e0;
-}
-
-/* Target any nested elements that might be causing the white background */
-.theme-dark .book-item *:not(.btn):not(input):not(select):not(textarea),
-.theme-dark .book-info *:not(.btn):not(input):not(select):not(textarea),
-.theme-dark .collection-item *:not(.btn):not(input):not(select):not(textarea),
-.theme-dark .book-list > li *:not(.btn):not(input):not(select):not(textarea),
-.theme-dark .dashboard-grid .card *:not(.btn):not(input):not(select):not(textarea) {
-    background-color: #121212 !important;
-}
-
-/* Ensure book actions area is also dark */
-.theme-dark .book-actions {
-    background-color: #1a1a1a !important;
-    border-top: 1px solid #333;
-}
-
-/* Target every possible element in dark mode */
-.theme-dark .container,
-.theme-dark .main-content,
-.theme-dark .page-wrapper,
-.theme-dark .book-list,
-.theme-dark .book-info,
-.theme-dark .book-details,
-.theme-dark .collection-books,
-.theme-dark .book-cover,
-.theme-dark .empty-state,
-.theme-dark .condition-badge,
-.theme-dark .rental-price,
-.theme-dark .dropdown,
-.theme-dark .form-check,
-.theme-dark .form-check-label,
-.theme-dark .form-check-input {
-    background-color: #121212 !important;
-    color: #e0e0e0;
-}
-
-/* Target specific inline styles */
-.theme-dark [style*="background-color"] {
-    background-color: #121212 !important;
-}
-
-/* Target book cover placeholder */
-.theme-dark .book-cover[style*="background-color"] {
-    background-color: #1a1a1a !important;
-}
-
-/* Target condition badges */
-.theme-dark .condition-badge[style*="background-color"] {
-    background-color: inherit !important;
-}
-
-/* Ensure all text is visible */
-.theme-dark p,
-.theme-dark span:not(.condition-badge),
-.theme-dark label,
-.theme-dark .book-title,
-.theme-dark .book-author {
-    color: #e0e0e0 !important;
-}
-
-/* Exception for success messages and status indicators */
-.theme-dark .in-library {
-    color: var(--success-color) !important;
-}
-
-/* Force dark background on any element with inline styles */
-.theme-dark [style*="background-color: #e9ecef"],
-.theme-dark [style*="background-color: #f8f9fa"],
-.theme-dark [style*="background-color: white"] {
-    background-color: #121212 !important;
-}
-
-/* Reset all backgrounds in dark mode */
-.theme-dark *:not(.btn):not(input):not(select):not(textarea):not(.condition-badge) {
-    background-color: #121212 !important;
-}
-
-/* Specific overrides for book and collection items */
-.theme-dark .book-item,
-.theme-dark .book-info,
-.theme-dark .book-details,
-.theme-dark .book-list li,
-.theme-dark .collection-books,
-.theme-dark .book-cover[style*="background-color"],
-.theme-dark div[style*="background-color"],
-.theme-dark span[style*="background-color"] {
-    background-color: #121212 !important;
-    border-color: #333 !important;
-}
-
-/* Override any inline styles */
-.theme-dark [style*="background-color"] {
-    background-color: #121212 !important;
-}
-
-/* Specific exceptions */
-.theme-dark .btn { background-color: var(--primary-color) !important; }
-.theme-dark .btn-outline { background-color: transparent !important; }
-.theme-dark input,
-.theme-dark select,
-.theme-dark textarea { background-color: #2d2d2d !important; }
-.theme-dark .condition-badge { background-color: inherit !important; }
-.theme-dark .book-actions { background-color: #1a1a1a !important; } 

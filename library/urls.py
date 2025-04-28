@@ -32,8 +32,8 @@ urlpatterns = [
     path('book/<int:book_id>/', views.book_detail, name='book_detail'),
     path('book/<int:book_id>/edit/', views.edit_book, name='edit_book'),
     path('book/<int:book_id>/rent/', views.rent_book, name='rent_book'),
-    path('my-rentals/', views.my_rentals, name='my_rentals'),
     path('collections/<int:collection_id>/delete/', views.delete_collection, name='delete_collection'),
     path('manage-users/', views.manage_users, name='manage_users'),
-    path('mark-notification-read/<int:notification_id>/', views.mark_notification_read, name='mark_notification_read'),
+    path('approve-rentals/', views.approve_rentals, name='approve_rentals'),
+    path('my-pending-rentals/', views.my_pending_rentals, name='my_pending_rentals'),
 ] 

@@ -13,114 +13,62 @@
     <link rel="icon" href="{% static 'library/images/cs.ico' %}" type="image/x-icon">
   </head>
   <body>
-    <div class="toast-container"></div>
-    <div class="notification-container" style="position: fixed; top: 80px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px;">
+    {% csrf_token %}
+    <div class="notification-container" style="
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 9999;
+        pointer-events: none;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 8px;
+    ">
         {% if messages %}
             {% for message in messages %}
-                <div class="notification {{ message.tags }}" style="
-                    background-color: {% if message.tags == 'success' %}#28a745{% elif message.tags == 'error' %}#dc3545{% elif message.tags == 'warning' %}#ffc107{% else %}#17a2b8{% endif %}; 
-                    color: white; 
-                    padding: 1rem; 
-                    border-radius: 4px; 
-                    box-shadow: 0 4px 12px rgba(0,0,0,0.15); 
-                    min-width: 300px;
-                    opacity: 1;
-                    transition: opacity 0.3s ease;
-                    position: relative;
-                    cursor: pointer;
-                ">
-                    <span style="margin-right: 20px;">{{ message }}</span>
-                    <button onclick="this.parentElement.remove()" style="
-                        position: absolute;
-                        right: 10px;
-                        top: 50%;
-                        transform: translateY(-50%);
-                        background: none;
-                        border: none;
-                        color: white;
-                        cursor: pointer;
-                        font-size: 18px;
-                    ">×</button>
+                <div class="message" style="display: none;" 
+                     data-message="{{ message }}"
+                     data-type="{{ message.tags }}">
                 </div>
-            {% endfor %}
-        {% endif %}
-        
-        {% if user.is_authenticated %}
-            {% for notification in user.notification_set.filter.all|slice:":5" %}
-                {% if not notification.read %}
-                    <div class="notification" id="notification-{{ notification.id }}" style="
-                        background-color: #17a2b8; 
-                        color: white; 
-                        padding: 1rem; 
-                        border-radius: 4px; 
-                        box-shadow: 0 4px 12px rgba(0,0,0,0.15); 
-                        min-width: 300px;
-                        opacity: 1;
-                        transition: opacity 0.3s ease;
-                        position: relative;
-                        cursor: pointer;
-                    ">
-                        <a href="{{ notification.link }}" style="color: white; text-decoration: none; display: block; margin-right: 20px;"
-                           onclick="markNotificationRead({{ notification.id }}, event)">
-                            {{ notification.message }}
-                        </a>
-                        <button onclick="dismissNotification({{ notification.id }})" style="
-                            position: absolute;
-                            right: 10px;
-                            top: 50%;
-                            transform: translateY(-50%);
-                            background: none;
-                            border: none;
-                            color: white;
-                            cursor: pointer;
-                            font-size: 18px;
-                        ">×</button>
-                    </div>
-                {% endif %}
             {% endfor %}
         {% endif %}
     </div>
     <div class="page-wrapper">
       <header>
-        <nav>
-          <div class="nav-container">
-              <div class="logo">
-                  <a href="{% url 'home' %}">
-                      <span class="logo-icon">📚</span> UVA Library
-                  </a>
-              </div>
-              <ul class="nav-links">
-                  {% block nav_toggle %}{% endblock %}
-
-                  <li><a href="{% url 'home' %}">Home</a></li>
-                  <li><a href="{% url 'explore_library' %}">Explore</a></li>
-                  <li><a href="{% url 'my_library' %}">My Library</a></li>
-                  <li><a href="{% url 'collections' %}">Collections</a></li>
-                  {% if user.is_authenticated %}
-                      {% if user.profile.role == 'librarian' %}
-                          <li><a href="{% url 'librarian_dashboard' %}">Dashboard</a></li>
-                      {% endif %}
-                      <li>
-                          <a href="{% url 'profile' %}">Profile</a>
-                      </li>
-                      <li>
-                          <a href="{% url 'account_logout' %}" class="btn btn-outline">
-                              Log Out
-                          </a>
-                      </li>
-                      {% if user.is_authenticated and user.profile.role == 'librarian' %}
-                          <li><a href="{% url 'manage_users' %}">Manage Users</a></li>
-                      {% endif %}
-                  {% else %}
-                      <li><a href="{% url 'login' %}" class="btn btn-outline">Login</a></li>
-                      <li><a href="{% url 'register' %}" class="btn btn-primary">Register</a></li>
-                  {% endif %}
-              </ul>
-          </div>
+        <nav class="nav-primary" style="position: fixed; top: 0; left: 0; right: 0; height: 60px; background-color: white; box-shadow: 0 2px 4px rgba(0,0,0,0.1); z-index: 1000;">
+            <div class="nav-container" style="display: flex; align-items: center; justify-content: flex-start; max-width: 1200px; margin: 0 auto; padding: 0 0; height: 100%; width: 100%;">
+                <div class="logo" style="flex-shrink: 0; margin: 0; padding: 0;">
+                    <a href="{% url 'home' %}" style="text-decoration: none; color: inherit; padding: 0 1rem;">
+                        <span class="logo-icon">📚</span> UVA Library
+                    </a>
+                </div>
+                <ul class="nav-links" style="display: flex; list-style: none; margin: 0; padding: 0; align-items: center; height: 100%; flex: 1; justify-content: flex-end; gap: 0.5rem;">
+                    {% block nav_toggle %}{% endblock %}
+                    <li style="height: 100%; display: flex; align-items: center; min-width: 100px; justify-content: center;"><a href="{% url 'home' %}" style="color: var(--dark-color); font-weight: 500; text-decoration: none; padding: 0.5rem 0.5rem; height: 100%; display: flex; align-items: center; justify-content: center; width: 100%; text-align: center; font-size: 1rem;">Home</a></li>
+                    <li style="height: 100%; display: flex; align-items: center; min-width: 100px; justify-content: center;"><a href="{% url 'explore_library' %}" style="color: var(--dark-color); font-weight: 500; text-decoration: none; padding: 0.5rem 0.5rem; height: 100%; display: flex; align-items: center; justify-content: center; width: 100%; text-align: center; font-size: 1rem;">Explore</a></li>
+                    <li style="height: 100%; display: flex; align-items: center; min-width: 100px; justify-content: center;"><a href="{% url 'my_library' %}" style="color: var(--dark-color); font-weight: 500; text-decoration: none; padding: 0.5rem 0.5rem; height: 100%; display: flex; align-items: center; justify-content: center; width: 100%; text-align: center; font-size: 1rem;">My Library</a></li>
+                    <li style="height: 100%; display: flex; align-items: center; min-width: 100px; justify-content: center;"><a href="{% url 'collections' %}" style="color: var(--dark-color); font-weight: 500; text-decoration: none; padding: 0.5rem 0.5rem; height: 100%; display: flex; align-items: center; justify-content: center; width: 100%; text-align: center; font-size: 1rem;">Collections</a></li>
+                    {% if user.is_authenticated %}
+                        {% if user.profile.role == 'librarian' %}
+                            <li style="height: 100%; display: flex; align-items: center; min-width: 100px; justify-content: center;"><a href="{% url 'librarian_dashboard' %}" style="color: var(--dark-color); font-weight: 500; text-decoration: none; padding: 0.5rem 0.5rem; height: 100%; display: flex; align-items: center; justify-content: center; width: 100%; text-align: center; font-size: 1rem;">Dashboard</a></li>
+                            <li style="height: 100%; display: flex; align-items: center; min-width: 100px; justify-content: center;"><a href="{% url 'approve_rentals' %}" style="color: var(--dark-color); font-weight: 500; text-decoration: none; padding: 0.5rem 0.5rem; height: 100%; display: flex; align-items: center; justify-content: center; width: 100%; text-align: center; font-size: 1rem;">Approve Rentals</a></li>
+                            <li style="height: 100%; display: flex; align-items: center; min-width: 100px; justify-content: center;"><a href="{% url 'manage_users' %}" style="color: var(--dark-color); font-weight: 500; text-decoration: none; padding: 0.5rem 0.5rem; height: 100%; display: flex; align-items: center; justify-content: center; width: 100%; text-align: center; font-size: 1rem;">Manage Users</a></li>
+                        {% else %}
+                            <li style="height: 100%; display: flex; align-items: center; min-width: 100px; justify-content: center;"><a href="{% url 'my_pending_rentals' %}" style="color: var(--dark-color); font-weight: 500; text-decoration: none; padding: 0.5rem 0.5rem; height: 100%; display: flex; align-items: center; justify-content: center; width: 100%; text-align: center; font-size: 1rem;">Pending Rentals</a></li>
+                        {% endif %}
+                        <li style="height: 100%; display: flex; align-items: center; min-width: 100px; justify-content: center;"><a href="{% url 'profile' %}" style="color: var(--dark-color); font-weight: 500; text-decoration: none; padding: 0.5rem 0.5rem; height: 100%; display: flex; align-items: center; justify-content: center; width: 100%; text-align: center; font-size: 1rem;">Profile</a></li>
+                        <li style="height: 100%; display: flex; align-items: center; min-width: 100px; justify-content: center;"><a href="{% url 'account_logout' %}" class="btn btn-outline" style="margin: 0.5rem; height: auto; min-width: 100px; white-space: nowrap; font-size: 1rem;">Log Out</a></li>
+                    {% else %}
+                        <li style="height: 100%; display: flex; align-items: center; min-width: 100px; justify-content: center;"><a href="{% url 'login' %}" class="btn btn-outline" style="margin: 0.5rem; height: auto; min-width: auto; font-size: 1rem;">Login</a></li>
+                        <li style="height: 100%; display: flex; align-items: center; min-width: 100px; justify-content: center;"><a href="{% url 'register' %}" class="btn btn-primary" style="margin: 0.5rem; height: auto; min-width: auto; font-size: 1rem;">Register</a></li>
+                    {% endif %}
+                </ul>
+            </div>
         </nav>
       </header>
       
-      <main class="main-content">
+      <main class="main-content" style="padding-top: 40px;">
         <div class="container">
           {% block content %}{% endblock %}
         </div>
@@ -154,94 +102,73 @@
     {% block extra_js %}{% endblock %}
     <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Function to create and show a toast message
-        function showToast(message, type = 'info') {
-            const toastContainer = document.querySelector('.toast-container');
-            const toast = document.createElement('div');
-            toast.className = `toast-message ${type}`;
-            toast.textContent = message;
+        // Function to show a notification
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                background: lightgreen;
+                padding: 8px 16px;
+                border-radius: 4px;
+                box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+                margin-bottom: 8px;
+                pointer-events: auto;
+                transform: translateX(120%);
+                opacity: 0;
+                transition: transform 0.3s ease-out, opacity 0.3s ease-out;
+                font-size: 1.1rem;
+                max-width: 300px;
+                display: flex;
+                align-items: center;
+                border-left: 3px solid;
+            `;
+
+            // Set border color based on type
+            switch(type) {
+                case 'success':
+                    notification.style.borderLeftColor = '#4CAF50';
+                    break;
+                case 'error':
+                    notification.style.borderLeftColor = '#f44336';
+                    break;
+                case 'warning':
+                    notification.style.borderLeftColor = '#ff9800';
+                    break;
+                default:
+                    notification.style.borderLeftColor = '#2196F3';
+            }
+
+            notification.textContent = message;
             
-            toastContainer.appendChild(toast);
+            const container = document.querySelector('.notification-container');
+            container.appendChild(notification);
             
-            // Trigger reflow
-            toast.offsetHeight;
-            
-            // Show the toast
+            // Force reflow and trigger animation
+            notification.offsetHeight;
             requestAnimationFrame(() => {
-                toast.classList.add('show');
+                notification.style.transform = 'translateX(0)';
+                notification.style.opacity = '1';
             });
             
-            // Remove the toast after 3 seconds
+            // Auto-dismiss after 3 seconds
             setTimeout(() => {
-                toast.classList.remove('show');
-                setTimeout(() => {
-                    toast.remove();
-                }, 300);
-            }, 3000);
-        }
-
-        // Handle Django messages
-        const messages = document.querySelectorAll('.message');
-        messages.forEach(message => {
-            const text = message.textContent;
-            const type = message.dataset.type || 'info';
-            showToast(text, type);
-            message.remove();
-        });
-
-        // Auto-hide notifications after 5 seconds
-        const notifications = document.querySelectorAll('.notification');
-        notifications.forEach(notification => {
-            setTimeout(() => {
+                notification.style.transform = 'translateX(120%)';
                 notification.style.opacity = '0';
-                setTimeout(() => {
+                // Wait for the animation to complete before removing
+                notification.addEventListener('transitionend', () => {
                     notification.remove();
-                }, 300);
+                }, { once: true });
             }, 3000);
-        });
-    });
-
-    function markNotificationRead(notificationId, event) {
-        if (event) {
-            event.preventDefault();
         }
-        
-        fetch(`/library/mark-notification-read/${notificationId}/`, {
-            method: 'POST',
-            headers: {
-                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
-            },
-        }).then(response => {
-            if (response.ok) {
-                const notification = document.getElementById(`notification-{{ notification.id }}`);
-                if (notification) {
-                    notification.style.opacity = '0';
-                    setTimeout(() => notification.remove(), 300);
-                }
-                if (event && event.target.href) {
-                    window.location.href = event.target.href;
-                }
-            }
-        });
-    }
 
-    function dismissNotification(notificationId) {
-        markNotificationRead(notificationId);
-    }
-
-    // Auto-dismiss notifications after 3 seconds
-    document.addEventListener('DOMContentLoaded', function() {
-        const notifications = document.querySelectorAll('.notification');
-        notifications.forEach(notification => {
+        // Process all messages with a slight delay to ensure proper animation
+        const messages = document.querySelectorAll('.message');
+        messages.forEach((message, index) => {
             setTimeout(() => {
-                const notificationId = notification.id.replace('notification-', '');
-                if (notificationId) {
-                    markNotificationRead(notificationId);
-                } else {
-                    notification.style.opacity = '0';
-                    setTimeout(() => notification.remove(), 300);
-                }
-            }, 3000);
+                const text = message.dataset.message;
+                const type = message.dataset.type || 'info';
+                showNotification(text, type);
+                message.remove();
+            }, index * 300); // Increased delay between notifications
         });
     });
     </script>
