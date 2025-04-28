@@ -303,14 +303,16 @@ def profile(request):
 
     return render(request, "library/profilepage.html", {'form': form, 'profile': profile})
 
-@login_required
 @prevent_admin_access
 def collections(request):
     # Get search query from request
     query = request.GET.get('q', '')
     
-    # Base queryset
-    collections = Collection.objects.all()
+    # Base queryset - show all collections for logged-in users, only public ones for anonymous users
+    if request.user.is_authenticated:
+        collections = Collection.objects.all()
+    else:
+        collections = Collection.objects.filter(is_private=False)
     
     # Apply search if query exists
     if query:
@@ -323,34 +325,22 @@ def collections(request):
         ).distinct()
     
     collections = collections.order_by('-id')  # Most recent first
-    user_collections = Collection.objects.filter(user=request.user)
-
-    if request.method == 'POST':
-        form = CollectionForm(request.POST, request.FILES, user=request.user)
-        if form.is_valid():
-            try:
-                collection = form.save(commit=False)
-                collection.user = request.user
-                collection.save()
-                
-                if form.cleaned_data.get('is_private') and form.cleaned_data.get('allowed_users'):
-                    collection.allowed_users.set(form.cleaned_data['allowed_users'])
-                
-                messages.success(request, "Collection created successfully.")
-                return redirect('collections')
-            except Exception as e:
-                if collection.id:
-                    collection.delete()
-                messages.error(request, f"Error creating collection: {str(e)}")
-    else:
-        form = CollectionForm(user=request.user)
     
-    return render(request, 'library/collection_page.html', {
+    context = {
         'collections': collections,
-        'user_collections': user_collections,
-        'form': form,
-        'query': query,  # Pass the query back to the template
-    })
+        'query': query,
+    }
+    
+    # Only add user-specific context if user is authenticated
+    if request.user.is_authenticated:
+        user_collections = Collection.objects.filter(user=request.user)
+        form = CollectionForm(user=request.user)
+        context.update({
+            'user_collections': user_collections,
+            'form': form,
+        })
+
+    return render(request, 'library/collection_page.html', context)
 
 @login_required
 def add_to_collection(request, book_id):
@@ -362,125 +352,118 @@ def add_to_collection(request, book_id):
         collection = get_object_or_404(Collection, id=collection_id)
         book = get_object_or_404(Book, id=book_id)
 
-        # Check if user can add items to this collection
-        if not collection.can_add_items(request.user):
-            messages.error(request, "You don't have permission to add items to this collection.")
-            return redirect('explore_library')
+        # Check permissions
+        if request.user.profile.role == 'librarian' or collection.user == request.user:
+            try:
+                # Check if book is in another private collection
+                if Collection.objects.filter(is_private=True, books=book).exists():
+                    messages.error(request, "This book is in a private collection and cannot be added to other collections.")
+                    return redirect('explore_library')
 
-        try:
-            # Check if book is in another private collection
-            if Collection.objects.filter(is_private=True, books=book).exists():
-                messages.error(request, "This book is in a private collection and cannot be added to other collections.")
-                return redirect('explore_library')
-
-            collection.books.add(book)
-            
-            # If the collection is private, remove the book from all user libraries
-            if collection.is_private:
-                UserLibrary.objects.filter(books=book).update(books=None)
-                # Create notification for affected users
-                affected_users = UserLibrary.objects.filter(books=book).values_list('user', flat=True)
-                for user_id in affected_users:
-                    Notification.objects.create(
-                        user_id=user_id,
-                        message=f"'{book.title}' has been moved to a private collection and is no longer available.",
-                        link=reverse('explore_library')
-                    )
-            
-            messages.success(request, f"Book added to collection '{collection.title}'")
-        except ValidationError as e:
-            messages.error(request, str(e))
+                collection.books.add(book)
+                messages.success(request, f"Book added to collection '{collection.title}'")
+            except ValidationError as e:
+                messages.error(request, str(e))
+        else:
+            messages.error(request, "You don't have permission to add books to this collection.")
 
     return redirect('explore_library')
 
-@login_required
 def collection_detail(request, collection_id):
     collection = get_object_or_404(Collection, id=collection_id)
-    user_library, created = UserLibrary.objects.get_or_create(user=request.user)
-    user_library_books = user_library.books.all()
+    
+    # Initialize user_library_books as empty list for anonymous users
+    user_library_books = []
+    
+    # Get user's library books if authenticated
+    if request.user.is_authenticated:
+        user_library, created = UserLibrary.objects.get_or_create(user=request.user)
+        user_library_books = user_library.books.all()
     
     # Add search functionality
     query = request.GET.get('q', '')
     
     # Determine if the user can view the collection's contents
     can_view_contents = (
-        not collection.is_private or
-        request.user == collection.user or
-        request.user in collection.allowed_users.all() or
-        request.user.profile.role == 'librarian'
+        not collection.is_private or  # Public collections are visible to all
+        (request.user.is_authenticated and (
+            request.user == collection.user or
+            request.user in collection.allowed_users.all() or
+            request.user.profile.role == 'librarian'
+        ))
     )
 
     context = {
         'collection': collection,
         'can_view_contents': can_view_contents,
-        'has_requested_access': request.user in collection.access_requests.all(),
-        'is_owner': request.user == collection.user,
-        'is_librarian': request.user.profile.role == 'librarian',
-        'query': query,  # Pass query to template
+        'is_owner': request.user.is_authenticated and request.user == collection.user,
+        'is_librarian': request.user.is_authenticated and request.user.profile.role == 'librarian',
+        'query': query,
     }
 
+    # Only add request-related context for authenticated users
+    if request.user.is_authenticated:
+        context['has_requested_access'] = request.user in collection.access_requests.all()
+
     if can_view_contents:
-        viewable_books = collection.books.filter(id__in=user_library_books)
-        non_viewable_books = collection.books.exclude(id__in=user_library_books)
+        books = collection.books.all()
         
         # Apply search if query exists
         if query:
-            viewable_books = viewable_books.filter(
+            books = books.filter(
                 Q(title__icontains=query) |
                 Q(author__icontains=query) |
                 Q(description__icontains=query) |
                 Q(isbn__icontains=query)
             )
-            non_viewable_books = non_viewable_books.filter(
-                Q(title__icontains=query) |
-                Q(author__icontains=query) |
-                Q(description__icontains=query) |
-                Q(isbn__icontains=query)
-            )
+        
+        # For authenticated users, separate books into viewable and non-viewable
+        if request.user.is_authenticated:
+            viewable_books = books.filter(id__in=user_library_books)
+            non_viewable_books = books.exclude(id__in=user_library_books)
+        else:
+            # For anonymous users, all books are non-viewable (they need to register to access)
+            viewable_books = []
+            non_viewable_books = books
         
         context.update({
             'viewable_books': viewable_books,
             'non_viewable_books': non_viewable_books,
         })
 
-    # Allow all librarians to manage private collections
-    if request.user.profile.role == 'librarian' and collection.is_private:
-        context['available_users'] = User.objects.filter(profile__role='patron').exclude(
-            id__in=collection.allowed_users.values_list('id', flat=True)
-        )
-        context['access_requests'] = collection.access_requests.all()
-        context['current_allowed_users'] = collection.allowed_users.all()
+    # Add librarian management context if applicable
+    if request.user.is_authenticated and request.user.profile.role == 'librarian' and collection.is_private:
+        context.update({
+            'available_users': User.objects.filter(profile__role='patron').exclude(
+                id__in=collection.allowed_users.values_list('id', flat=True)
+            ),
+            'access_requests': collection.access_requests.all(),
+            'current_allowed_users': collection.allowed_users.all()
+        })
 
     return render(request, 'library/collection_detail.html', context)
 
 @login_required
 def remove_from_collection(request, collection_id, book_id):
     if request.method == 'POST':
-        # Allow both collection owners and librarians to remove books
-        if request.user.profile.role == 'librarian':
-            collection = get_object_or_404(Collection, id=collection_id)
-        else:
-            collection = get_object_or_404(Collection, id=collection_id, user=request.user)
-            
+        collection = get_object_or_404(Collection, id=collection_id)
         book = get_object_or_404(Book, id=book_id)
-        collection.books.remove(book)
         
-        # If this was a private collection and the book is no longer in any private collections,
-        # create a notification to inform users it's available again
-        if collection.is_private and not Collection.objects.filter(is_private=True, books=book).exists():
-            Notification.objects.create(
-                user=request.user,
-                message=f"'{book.title}' is now available in the public library.",
-                link=reverse('explore_library')
-            )
+        # Check if user has permission to remove books
+        if request.user.profile.role == 'librarian' or collection.user == request.user:
+            collection.books.remove(book)
             
-        # Add notification for collection owner if a librarian removed the book
-        if request.user.profile.role == 'librarian' and collection.user != request.user:
-            Notification.objects.create(
-                user=collection.user,
-                message=f"A librarian has removed '{book.title}' from your collection '{collection.title}'",
-                link=reverse('collection_detail', args=[collection.id])
-            )
+            # Create notification for collection owner if a librarian removed the book
+            if request.user.profile.role == 'librarian' and collection.user != request.user:
+                Notification.objects.create(
+                    user=collection.user,
+                    message=f"A librarian has removed '{book.title}' from your collection '{collection.title}'",
+                    link=reverse('collection_detail', args=[collection.id])
+                )
+            
+            messages.success(request, f"'{book.title}' has been removed from the collection.")
+        else:
+            messages.error(request, "You don't have permission to remove books from this collection.")
             
     return redirect('collection_detail', collection_id=collection_id)
 

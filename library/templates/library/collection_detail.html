@@ -79,55 +79,22 @@
     {% endif %}
 </div>
 
+{% if not user.is_authenticated and not collection.is_private %}
+    <div class="alert alert-info" style="margin-bottom: 1rem;">
+        <p>Sign in to rent books and create your own collections!</p>
+        <div style="margin-top: 1rem;">
+            <a href="{% url 'login' %}" class="btn btn-primary">Sign In</a>
+            <a href="{% url 'register' %}" class="btn btn-outline">Register</a>
+        </div>
+    </div>
+{% endif %}
+
 {% if can_view_contents %}
     <div class="card">
         <h2 class="card-title">Books in this Collection</h2>
         
-        {% if viewable_books %}
-            <h3>Books You Can Access</h3>
-            <ul class="book-list">
-                {% for book in viewable_books %}
-                <li class="book-item">
-                    {% if book.cover_image %}
-                    <img src="{{ book.cover_image.url }}" alt="{{ book.title }} cover" class="book-cover">
-                    {% else %}
-                    <div class="book-cover" style="background-color: #e9ecef; display: flex; align-items: center; justify-content: center;">
-                        <span style="font-size: 3rem; color: #adb5bd;">📖</span>
-                    </div>
-                    {% endif %}
-                    
-                    <div class="book-info">
-                        <h3 class="book-title">
-                            <a href="{% url 'book_detail' book.id %}" style="color: inherit; text-decoration: none;">
-                                {{ book.title }}
-                            </a>
-                        </h3>
-                        <p class="book-author">by {{ book.author }}</p>
-                        {% if book.pdf_file %}
-                        <div style="margin-top: 0.5rem;">
-                            <a href="{% url 'book_detail' book.id %}" class="btn btn-outline" style="font-size: 0.9rem;">
-                                📄 View Book
-                            </a>
-                        </div>
-                        {% endif %}
-                    </div>
-                    
-                    {% if collection.user == user %}
-                    <div class="book-actions">
-                        <form method="post" action="{% url 'remove_from_collection' collection.id book.id %}" style="display: inline;">
-                            {% csrf_token %}
-                            <button type="submit" class="btn btn-danger" onclick="return confirm('Remove this book from the collection?')">Remove</button>
-                        </form>
-                    </div>
-                    {% endif %}
-                </li>
-                {% endfor %}
-            </ul>
-        {% endif %}
-
-        {% if non_viewable_books %}
-            <h3>Other Books in Collection</h3>
-            <ul class="book-list">
+        {% if not user.is_authenticated %}
+            <div class="book-list">
                 {% for book in non_viewable_books %}
                 <li class="book-item">
                     {% if book.cover_image %}
@@ -139,22 +106,102 @@
                     {% endif %}
                     
                     <div class="book-info">
-                        <span class="book-title">
-                            <a href="{% url 'book_detail' book.id %}" style="color: inherit; text-decoration: none;">
-                                {{ book.title }}
-                            </a>
-                        </span>
-                        <span class="book-author">by {{ book.author }}</span>
+                        <h3 class="book-title">{{ book.title }}</h3>
+                        <p class="book-author">by {{ book.author }}</p>
                         <p style="margin-top: 0.5rem; color: var(--text-light);">
-                            Rent this book to view its content
+                            Sign in to rent and view this book
                         </p>
-                        <div style="margin-top: 0.5rem;">
-                            <a href="{% url 'rent_book' book.id %}" class="btn btn-primary">Rent Book</a>
-                        </div>
+                    </div>
+                    
+                    <div class="book-actions">
+                        <a href="{% url 'login' %}" class="btn btn-primary">Sign in to Rent</a>
                     </div>
                 </li>
                 {% endfor %}
-            </ul>
+            </div>
+        {% else %}
+            {% if viewable_books %}
+                <h3>Books You Can Access</h3>
+                <ul class="book-list">
+                    {% for book in viewable_books %}
+                    <li class="book-item">
+                        {% if book.cover_image %}
+                        <img src="{{ book.cover_image.url }}" alt="{{ book.title }} cover" class="book-cover">
+                        {% else %}
+                        <div class="book-cover" style="background-color: #e9ecef; display: flex; align-items: center; justify-content: center;">
+                            <span style="font-size: 3rem; color: #adb5bd;">📖</span>
+                        </div>
+                        {% endif %}
+                        
+                        <div class="book-info">
+                            <h3 class="book-title">
+                                <a href="{% url 'book_detail' book.id %}" style="color: inherit; text-decoration: none;">
+                                    {{ book.title }}
+                                </a>
+                            </h3>
+                            <p class="book-author">by {{ book.author }}</p>
+                            {% if book.pdf_file %}
+                            <div style="margin-top: 0.5rem;">
+                                <a href="{% url 'book_detail' book.id %}" class="btn btn-outline" style="font-size: 0.9rem;">
+                                    📄 View Book
+                                </a>
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="book-actions">
+                            {% if is_librarian or collection.user == user %}
+                                <form method="post" action="{% url 'remove_from_collection' collection.id book.id %}" style="display: inline;">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-danger" onclick="return confirm('Remove this book from the collection?')">Remove</button>
+                                </form>
+                            {% endif %}
+                        </div>
+                    </li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+
+            {% if non_viewable_books %}
+                <h3>Other Books in Collection</h3>
+                <ul class="book-list">
+                    {% for book in non_viewable_books %}
+                    <li class="book-item">
+                        {% if book.cover_image %}
+                        <img src="{{ book.cover_image.url }}" alt="{{ book.title }} cover" class="book-cover">
+                        {% else %}
+                        <div class="book-cover" style="background-color: #e9ecef; display: flex; align-items: center; justify-content: center;">
+                            <span style="font-size: 3rem; color: #adb5bd;">📖</span>
+                        </div>
+                        {% endif %}
+                        
+                        <div class="book-info">
+                            <span class="book-title">
+                                <a href="{% url 'book_detail' book.id %}" style="color: inherit; text-decoration: none;">
+                                    {{ book.title }}
+                                </a>
+                            </span>
+                            <span class="book-author">by {{ book.author }}</span>
+                            <p style="margin-top: 0.5rem; color: var(--text-light);">
+                                Rent this book to view its content
+                            </p>
+                            <div style="margin-top: 0.5rem;">
+                                <a href="{% url 'rent_book' book.id %}" class="btn btn-primary">Rent Book</a>
+                            </div>
+                        </div>
+
+                        <div class="book-actions">
+                            {% if is_librarian or collection.user == user %}
+                                <form method="post" action="{% url 'remove_from_collection' collection.id book.id %}" style="display: inline;">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-danger" onclick="return confirm('Remove this book from the collection?')">Remove</button>
+                                </form>
+                            {% endif %}
+                        </div>
+                    </li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
         {% endif %}
     </div>
 

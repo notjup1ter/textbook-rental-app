@@ -23,8 +23,9 @@
     </form>
 </div>
 
-<div class="dashboard-grid" style="display: grid; grid-template-columns: 1fr 2fr; gap: 2rem;">
-    <!-- Create Collection Form -->
+<div class="dashboard-grid" style="display: grid; grid-template-columns: {% if user.is_authenticated %}1fr 2fr{% else %}1fr{% endif %}; gap: 2rem;">
+    <!-- Create Collection Form - Only show for authenticated users -->
+    {% if user.is_authenticated %}
     <div class="card">
         <h2 class="card-title">Create New Collection</h2>
         <form method="post" enctype="multipart/form-data">
@@ -64,14 +65,24 @@
             <button type="submit" class="btn btn-primary" style="width: 100%;">Create Collection</button>
         </form>
     </div>
+    {% endif %}
 
     <!-- Collections List -->
     <div class="card">
         <h2 class="card-title">Browse Collections</h2>
+        {% if not user.is_authenticated %}
+            <div class="alert alert-info" style="margin-bottom: 1rem;">
+                <p>Sign in to create your own collections and access private collections!</p>
+                <div style="margin-top: 1rem;">
+                    <a href="{% url 'login' %}" class="btn btn-primary">Sign In</a>
+                    <a href="{% url 'register' %}" class="btn btn-outline">Register</a>
+                </div>
+            </div>
+        {% endif %}
+        
         {% if collections %}
-            <!-- Add search results message if there's a query -->
             {% if query %}
-                <div class="search-results-info" style="grid-column: span 2; margin-bottom: 1rem;">
+                <div class="search-results-info" style="margin-bottom: 1rem;">
                     <p>Showing results for "{{ query }}" ({{ collections|length }} found)</p>
                 </div>
             {% endif %}
@@ -140,9 +151,9 @@
                 {% endfor %}
             </ul>
         {% else %}
-        <div class="empty-state">
-            <p>No collections available yet. Create your first collection!</p>
-        </div>
+            <div class="empty-state">
+                <p>No collections available yet{% if user.is_authenticated %}. Create your first collection!{% endif %}</p>
+            </div>
         {% endif %}
     </div>
 </div>
