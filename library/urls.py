@@ -5,7 +5,6 @@ from . import views
 
 urlpatterns = [
     path('', views.home, name='home'),
-    path('toggle-theme/', views.toggle_theme, name='toggle_theme'),
     path('explore/', views.explore_library, name='explore_library'),
     path('my-library/', views.my_library, name='my_library'),
     path('librarian/', views.librarian_dashboard, name='librarian_dashboard'),

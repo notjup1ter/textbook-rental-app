@@ -22,10 +22,11 @@ PRICE_RANGES = [
 
 def home(request):
     if request.user.is_authenticated:
-        theme = request.user.profile.preference
-    else:
-        theme = request.session.get('theme', 'light')
-    return render(request, 'library/home.html', {'theme': theme})
+        try:
+            Profile.objects.get_or_create(user=request.user, defaults={'role': 'patron'})
+        except Exception:
+            pass
+    return render(request, 'library/home.html')
 
 def explore_library(request):
     books = Book.objects.all()
@@ -366,17 +367,6 @@ def edit_book(request, book_id):
         'form': form,
         'book': book
     })
-
-def toggle_theme(request):
-    if request.user.is_authenticated:
-        profile = request.user.profile
-        profile.preference = 'dark' if profile.preference == 'light' else 'light'
-        profile.save()
-    else:
-        current_theme = request.session.get('theme', 'light')
-        request.session['theme'] = 'dark' if current_theme == 'light' else 'light'
-
-    return redirect(request.META.get('HTTP_REFERER', 'home'))
 
 def process_mock_payment(amount, card_number):
     """Mock payment processing - always succeeds if card number ends in even digit"""
