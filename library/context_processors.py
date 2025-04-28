@@ -5,12 +5,9 @@ def notifications(request):
         unread_notifications = Notification.objects.filter(
             user=request.user,
             read=False
-        ).order_by('-created_at')
-        return {
-            'notifications': unread_notifications,
-            'notification_count': unread_notifications.count()
-        }
-    return {'notifications': [], 'notification_count': 0}
+        ).order_by('-created_at')[:5]
+        return {'unread_notifications': unread_notifications}
+    return {'unread_notifications': []}
 
 def theme(request):
     if request.user.is_authenticated:

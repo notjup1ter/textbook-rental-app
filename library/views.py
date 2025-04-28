@@ -135,7 +135,6 @@ def my_library(request):
     )
     
     for rental in nearly_expired_rentals:
-        # Create expiration warning notification if not already created
         if not Notification.objects.filter(
             user=request.user,
             message__contains=f"Your rental of {rental.book.title} will expire soon",
@@ -146,6 +145,7 @@ def my_library(request):
                 message=f"Your rental of {rental.book.title} will expire soon!",
                 link=reverse('my_library')
             )
+            messages.warning(request, f"Your rental of {rental.book.title} will expire soon!")
     
     # Check for expired rentals
     expired_rentals = Rental.objects.filter(
@@ -159,12 +159,12 @@ def my_library(request):
         rental.save()
         user_library.books.remove(rental.book)
         
-        # Create expiration notification
         Notification.objects.create(
             user=request.user,
             message=f"Your rental of {rental.book.title} has expired",
             link=reverse('explore_library')
         )
+        messages.error(request, f"Your rental of {rental.book.title} has expired")
     
     # Get active rentals
     active_rentals = Rental.objects.filter(

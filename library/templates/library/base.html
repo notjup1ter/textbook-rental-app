@@ -14,6 +14,71 @@
   </head>
   <body>
     <div class="toast-container"></div>
+    <div class="notification-container" style="position: fixed; top: 80px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px;">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="notification {{ message.tags }}" style="
+                    background-color: {% if message.tags == 'success' %}#28a745{% elif message.tags == 'error' %}#dc3545{% elif message.tags == 'warning' %}#ffc107{% else %}#17a2b8{% endif %}; 
+                    color: white; 
+                    padding: 1rem; 
+                    border-radius: 4px; 
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.15); 
+                    min-width: 300px;
+                    opacity: 1;
+                    transition: opacity 0.3s ease;
+                    position: relative;
+                    cursor: pointer;
+                ">
+                    <span style="margin-right: 20px;">{{ message }}</span>
+                    <button onclick="this.parentElement.remove()" style="
+                        position: absolute;
+                        right: 10px;
+                        top: 50%;
+                        transform: translateY(-50%);
+                        background: none;
+                        border: none;
+                        color: white;
+                        cursor: pointer;
+                        font-size: 18px;
+                    ">×</button>
+                </div>
+            {% endfor %}
+        {% endif %}
+        
+        {% if user.is_authenticated %}
+            {% for notification in user.notification_set.filter.all|slice:":5" %}
+                {% if not notification.read %}
+                    <div class="notification" style="
+                        background-color: #17a2b8; 
+                        color: white; 
+                        padding: 1rem; 
+                        border-radius: 4px; 
+                        box-shadow: 0 4px 12px rgba(0,0,0,0.15); 
+                        min-width: 300px;
+                        opacity: 1;
+                        transition: opacity 0.3s ease;
+                        position: relative;
+                        cursor: pointer;
+                    ">
+                        <a href="{{ notification.link }}" style="color: white; text-decoration: none; display: block; margin-right: 20px;">
+                            {{ notification.message }}
+                        </a>
+                        <button onclick="this.parentElement.remove()" style="
+                            position: absolute;
+                            right: 10px;
+                            top: 50%;
+                            transform: translateY(-50%);
+                            background: none;
+                            border: none;
+                            color: white;
+                            cursor: pointer;
+                            font-size: 18px;
+                        ">×</button>
+                    </div>
+                {% endif %}
+            {% endfor %}
+        {% endif %}
+    </div>
     <div class="page-wrapper">
       <header>
         <nav>
@@ -121,6 +186,17 @@
             const type = message.dataset.type || 'info';
             showToast(text, type);
             message.remove();
+        });
+
+        // Auto-hide notifications after 5 seconds
+        const notifications = document.querySelectorAll('.notification');
+        notifications.forEach(notification => {
+            setTimeout(() => {
+                notification.style.opacity = '0';
+                setTimeout(() => {
+                    notification.remove();
+                }, 300);
+            }, 5000);
         });
     });
     </script>
