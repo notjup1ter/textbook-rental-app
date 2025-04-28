@@ -69,6 +69,7 @@ class Collection(models.Model):
     cover_image = models.ImageField(upload_to='collection_covers/', blank=True, null=True)
     is_private = models.BooleanField(default=False)
     allowed_users = models.ManyToManyField(User, blank=True, related_name='accessible_collections')
+    access_requests = models.ManyToManyField(User, blank=True, related_name='requested_collections')
 
     def clean(self):
         if not hasattr(self, 'user'):
@@ -85,6 +86,16 @@ class Collection(models.Model):
 
     def __str__(self):
         return self.title
+
+    def can_add_items(self, user):
+        """Check if a user can add items to this collection"""
+        if self.user == user:  # Collection owner can always add items
+            return True
+        if user.profile.role == 'librarian':  # Librarians can add to any collection
+            return True
+        if self.user.profile.role == 'librarian':  # Patrons can't add to librarian collections
+            return False
+        return True  # Patrons can add to other patron collections
 
 class Rental(models.Model):
     RENTAL_STATUS = (

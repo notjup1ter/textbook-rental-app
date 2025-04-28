@@ -4,7 +4,7 @@ from .models import Book, UserLibrary, Profile, ApprovedLibrarianEmail, Collecti
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import logout, login
 from .forms import CustomUserCreationForm, ProfileForm, CollectionForm, BookForm, RentalPaymentForm, BookRatingForm
-from django.http import FileResponse, Http404
+from django.http import FileResponse, Http404, JsonResponse
 from django.utils import timezone
 from datetime import timedelta
 from decimal import Decimal
@@ -42,13 +42,20 @@ def home(request):
 
 @prevent_admin_access
 def explore_library(request):
-    books = Book.objects.all()
-    query  = request.GET.get('q')
+    # First, get IDs of books in private collections
+    private_collection_books = Book.objects.filter(
+        collection__is_private=True
+    ).values_list('id', flat=True)
+    
+    # Exclude these books from the main queryset
+    books = Book.objects.exclude(id__in=private_collection_books)
+    
+    query = request.GET.get('q')
     selected_conditions = request.GET.getlist('conditions')
     selected_price_ranges = request.GET.getlist('price_ranges')
     
     if query:
-        books = Book.objects.filter(
+        books = books.filter(
             Q(title__icontains=query) | Q(author__icontains=query)
         )
     if selected_conditions:
@@ -224,7 +231,7 @@ def assign_role(request):
         else: 
             profile.role = 'patron'
             profile.save()
-        
+
     # If profile already exists and has a role, redirect based on current role
     if profile.role == 'librarian':
         return redirect('librarian_dashboard')
@@ -299,42 +306,27 @@ def profile(request):
 @login_required
 @prevent_admin_access
 def collections(request):
-    # Get collections based on user role and permissions
-    if request.user.profile.role == 'librarian':
-        collections = Collection.objects.all()
-    else:
-        collections = Collection.objects.filter(
-            Q(is_private=False) |  # Public collections
-            Q(allowed_users=request.user) |  # Private collections user has access to
-            Q(user=request.user)  # User's own collections
-        ).distinct()
-
+    # Remove all filtering - show all collections to everyone
+    collections = Collection.objects.all().order_by('-id')  # Most recent first
     user_collections = Collection.objects.filter(user=request.user)
 
     if request.method == 'POST':
         form = CollectionForm(request.POST, request.FILES, user=request.user)
         if form.is_valid():
             try:
-                # Create collection but don't save to DB yet
                 collection = form.save(commit=False)
                 collection.user = request.user
-                
-                # Save the collection
                 collection.save()
                 
-                # Handle the many-to-many relationships
                 if form.cleaned_data.get('is_private') and form.cleaned_data.get('allowed_users'):
-                    # Set allowed users for private collections
                     collection.allowed_users.set(form.cleaned_data['allowed_users'])
                 
                 messages.success(request, "Collection created successfully.")
                 return redirect('collections')
             except Exception as e:
-                # Delete the collection if it was created but had an error
                 if collection.id:
                     collection.delete()
                 messages.error(request, f"Error creating collection: {str(e)}")
-                
     else:
         form = CollectionForm(user=request.user)
     
@@ -351,19 +343,34 @@ def add_to_collection(request, book_id):
         if not collection_id:
             return redirect('explore_library')
             
-        collection = get_object_or_404(Collection, id=collection_id, user=request.user)
+        collection = get_object_or_404(Collection, id=collection_id)
         book = get_object_or_404(Book, id=book_id)
+
+        # Check if user can add items to this collection
+        if not collection.can_add_items(request.user):
+            messages.error(request, "You don't have permission to add items to this collection.")
+            return redirect('explore_library')
 
         try:
             # Check if book is in another private collection
             if Collection.objects.filter(is_private=True, books=book).exists():
-                messages.error(
-                    request, 
-                    "This book is in a private collection and cannot be added to other collections."
-                )
+                messages.error(request, "This book is in a private collection and cannot be added to other collections.")
                 return redirect('explore_library')
 
             collection.books.add(book)
+            
+            # If the collection is private, remove the book from all user libraries
+            if collection.is_private:
+                UserLibrary.objects.filter(books=book).update(books=None)
+                # Create notification for affected users
+                affected_users = UserLibrary.objects.filter(books=book).values_list('user', flat=True)
+                for user_id in affected_users:
+                    Notification.objects.create(
+                        user_id=user_id,
+                        message=f"'{book.title}' has been moved to a private collection and is no longer available.",
+                        link=reverse('explore_library')
+                    )
+            
             messages.success(request, f"Book added to collection '{collection.title}'")
         except ValidationError as e:
             messages.error(request, str(e))
@@ -373,52 +380,137 @@ def add_to_collection(request, book_id):
 @login_required
 def collection_detail(request, collection_id):
     collection = get_object_or_404(Collection, id=collection_id)
-    
-    # Get user's library books
     user_library, created = UserLibrary.objects.get_or_create(user=request.user)
     user_library_books = user_library.books.all()
     
-    # Handle updating allowed users
-    if request.method == 'POST' and request.user.profile.role == 'librarian':
-        action = request.POST.get('action')
-        user_id = request.POST.get('user_id')
-        
-        if action and user_id:
-            try:
-                target_user = User.objects.get(id=user_id)
-                if action == 'add_user':
-                    collection.allowed_users.add(target_user)
-                    messages.success(request, f"{target_user.username} has been added to the collection's allowed users.")
-                elif action == 'remove_user':
+    if request.method == 'POST':
+        if 'request_access' in request.POST and request.user.profile.role == 'patron':
+            collection.access_requests.add(request.user)
+            messages.success(request, f"Access request sent for collection '{collection.title}'")
+            # Notify all librarians about the access request
+            librarians = User.objects.filter(profile__role='librarian')
+            for librarian in librarians:
+                Notification.objects.create(
+                    user=librarian,
+                    message=f"{request.user.username} has requested access to collection '{collection.title}'",
+                    link=reverse('collection_detail', args=[collection.id])
+                )
+            return redirect('collections')
+        elif request.user.profile.role == 'librarian':
+            action = request.POST.get('action')
+            user_id = request.POST.get('user_id')
+            
+            if action == 'remove_user' and user_id:
+                try:
+                    target_user = User.objects.get(id=user_id)
                     collection.allowed_users.remove(target_user)
-                    messages.success(request, f"{target_user.username} has been removed from the collection's allowed users.")
-            except User.DoesNotExist:
-                messages.error(request, "User not found.")
-    
-    # Get all potential users that could be added (patrons only)
-    available_users = None
+                    Notification.objects.create(
+                        user=target_user,
+                        message=f"Your access to collection '{collection.title}' has been removed",
+                        link=reverse('collections')
+                    )
+                    messages.success(request, f"Access removed for {target_user.username}")
+                except User.DoesNotExist:
+                    messages.error(request, "User not found")
+                return redirect('collection_detail', collection_id=collection_id)
+            
+            elif action == 'add_user' and user_id:
+                try:
+                    target_user = User.objects.get(id=user_id)
+                    collection.allowed_users.add(target_user)
+                    collection.access_requests.remove(target_user)
+                    Notification.objects.create(
+                        user=target_user,
+                        message=f"You have been granted access to collection '{collection.title}'",
+                        link=reverse('collection_detail', args=[collection.id])
+                    )
+                    messages.success(request, f"Access granted to {target_user.username}")
+                except User.DoesNotExist:
+                    messages.error(request, "User not found")
+                return redirect('collection_detail', collection_id=collection_id)
+            
+            elif action == 'reject_request' and user_id:
+                try:
+                    target_user = User.objects.get(id=user_id)
+                    collection.access_requests.remove(target_user)
+                    Notification.objects.create(
+                        user=target_user,
+                        message=f"Your access request for collection '{collection.title}' has been rejected",
+                        link=reverse('collections')
+                    )
+                    messages.success(request, f"Access request from {target_user.username} has been rejected")
+                except User.DoesNotExist:
+                    messages.error(request, "User not found")
+                return redirect('collection_detail', collection_id=collection_id)
+
+    # Determine if the user can view the collection's contents
+    can_view_contents = (
+        not collection.is_private or
+        request.user == collection.user or
+        request.user in collection.allowed_users.all() or
+        request.user.profile.role == 'librarian'
+    )
+
+    # Determine if the user can add items
+    can_add_items = collection.can_add_items(request.user)
+
+    # Check if user has already requested access
+    has_requested_access = request.user in collection.access_requests.all()
+
+    context = {
+        'collection': collection,
+        'can_view_contents': can_view_contents,
+        'can_add_items': can_add_items,
+        'has_requested_access': has_requested_access,
+        'is_owner': request.user == collection.user,
+        'is_librarian': request.user.profile.role == 'librarian',
+    }
+
+    if can_view_contents:
+        context.update({
+            'viewable_books': collection.books.filter(id__in=user_library_books),
+            'non_viewable_books': collection.books.exclude(id__in=user_library_books),
+        })
+
+    # Allow all librarians to manage private collections
     if request.user.profile.role == 'librarian' and collection.is_private:
-        available_users = User.objects.filter(profile__role='patron').exclude(
+        context['available_users'] = User.objects.filter(profile__role='patron').exclude(
             id__in=collection.allowed_users.values_list('id', flat=True)
         )
-    
-    # Filter collection books to only show those in user's library
-    viewable_books = collection.books.filter(id__in=user_library_books)
-    non_viewable_books = collection.books.exclude(id__in=user_library_books)
-    
-    return render(request, 'library/collection_detail.html', {
-        'collection': collection,
-        'viewable_books': viewable_books,
-        'non_viewable_books': non_viewable_books,
-        'available_users': available_users,
-    })
+        context['access_requests'] = collection.access_requests.all()
+        context['current_allowed_users'] = collection.allowed_users.all()
+
+    return render(request, 'library/collection_detail.html', context)
 
 @login_required
 def remove_from_collection(request, collection_id, book_id):
     if request.method == 'POST':
-        collection = get_object_or_404(Collection, id=collection_id, user=request.user)
+        # Allow both collection owners and librarians to remove books
+        if request.user.profile.role == 'librarian':
+            collection = get_object_or_404(Collection, id=collection_id)
+        else:
+            collection = get_object_or_404(Collection, id=collection_id, user=request.user)
+            
         book = get_object_or_404(Book, id=book_id)
         collection.books.remove(book)
+        
+        # If this was a private collection and the book is no longer in any private collections,
+        # create a notification to inform users it's available again
+        if collection.is_private and not Collection.objects.filter(is_private=True, books=book).exists():
+            Notification.objects.create(
+                user=request.user,
+                message=f"'{book.title}' is now available in the public library.",
+                link=reverse('explore_library')
+            )
+            
+        # Add notification for collection owner if a librarian removed the book
+        if request.user.profile.role == 'librarian' and collection.user != request.user:
+            Notification.objects.create(
+                user=collection.user,
+                message=f"A librarian has removed '{book.title}' from your collection '{collection.title}'",
+                link=reverse('collection_detail', args=[collection.id])
+            )
+            
     return redirect('collection_detail', collection_id=collection_id)
 
 @login_required
@@ -602,13 +694,33 @@ def my_rentals(request):
     })
 
 @login_required
+@prevent_admin_access
 def delete_collection(request, collection_id):
-    collection = get_object_or_404(Collection, id=collection_id, user=request.user)
-    if request.method == 'POST':
-        collection.delete()
-        messages.success(request, f"Collection '{collection.title}' has been deleted.")
-        return redirect('collections')
-    return redirect('collection_detail', collection_id=collection_id)
+    collection = get_object_or_404(Collection, id=collection_id)
+    
+    # Allow deletion if user is either:
+    # 1. The collection owner
+    # 2. A librarian (can delete any collection)
+    if request.user.profile.role == 'librarian' or collection.user == request.user:
+        try:
+            collection_title = collection.title
+            collection.delete()
+            
+            # Create notification for collection owner if deleted by librarian
+            if request.user.profile.role == 'librarian' and collection.user != request.user:
+                Notification.objects.create(
+                    user=collection.user,
+                    message=f"Your collection '{collection_title}' has been deleted by a librarian",
+                    link=reverse('collections')
+                )
+            
+            messages.success(request, f"Collection '{collection_title}' has been deleted.")
+        except Exception as e:
+            messages.error(request, f"Error deleting collection: {str(e)}")
+    else:
+        messages.error(request, "You don't have permission to delete this collection.")
+    
+    return redirect('collections')
 
 @login_required
 @prevent_admin_access
@@ -658,3 +770,12 @@ def manage_users(request):
     # Ensure we get fresh data after any updates
     users = User.objects.select_related('profile').all()
     return render(request, 'library/manage_users.html', {'users': users})
+
+@login_required
+def mark_notification_read(request, notification_id):
+    if request.method == 'POST':
+        notification = get_object_or_404(Notification, id=notification_id, user=request.user)
+        notification.read = True
+        notification.save()
+        return JsonResponse({'status': 'success'})
+    return JsonResponse({'status': 'error'}, status=400)

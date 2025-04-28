@@ -35,4 +35,5 @@ urlpatterns = [
     path('my-rentals/', views.my_rentals, name='my_rentals'),
     path('collections/<int:collection_id>/delete/', views.delete_collection, name='delete_collection'),
     path('manage-users/', views.manage_users, name='manage_users'),
+    path('mark-notification-read/<int:notification_id>/', views.mark_notification_read, name='mark_notification_read'),
 ] 

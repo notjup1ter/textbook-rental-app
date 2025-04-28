@@ -48,7 +48,7 @@
         {% if user.is_authenticated %}
             {% for notification in user.notification_set.filter.all|slice:":5" %}
                 {% if not notification.read %}
-                    <div class="notification" style="
+                    <div class="notification" id="notification-{{ notification.id }}" style="
                         background-color: #17a2b8; 
                         color: white; 
                         padding: 1rem; 
@@ -60,10 +60,11 @@
                         position: relative;
                         cursor: pointer;
                     ">
-                        <a href="{{ notification.link }}" style="color: white; text-decoration: none; display: block; margin-right: 20px;">
+                        <a href="{{ notification.link }}" style="color: white; text-decoration: none; display: block; margin-right: 20px;"
+                           onclick="markNotificationRead({{ notification.id }}, event)">
                             {{ notification.message }}
                         </a>
-                        <button onclick="this.parentElement.remove()" style="
+                        <button onclick="dismissNotification({{ notification.id }})" style="
                             position: absolute;
                             right: 10px;
                             top: 50%;
@@ -196,7 +197,51 @@
                 setTimeout(() => {
                     notification.remove();
                 }, 300);
-            }, 5000);
+            }, 3000);
+        });
+    });
+
+    function markNotificationRead(notificationId, event) {
+        if (event) {
+            event.preventDefault();
+        }
+        
+        fetch(`/library/mark-notification-read/${notificationId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            },
+        }).then(response => {
+            if (response.ok) {
+                const notification = document.getElementById(`notification-{{ notification.id }}`);
+                if (notification) {
+                    notification.style.opacity = '0';
+                    setTimeout(() => notification.remove(), 300);
+                }
+                if (event && event.target.href) {
+                    window.location.href = event.target.href;
+                }
+            }
+        });
+    }
+
+    function dismissNotification(notificationId) {
+        markNotificationRead(notificationId);
+    }
+
+    // Auto-dismiss notifications after 3 seconds
+    document.addEventListener('DOMContentLoaded', function() {
+        const notifications = document.querySelectorAll('.notification');
+        notifications.forEach(notification => {
+            setTimeout(() => {
+                const notificationId = notification.id.replace('notification-', '');
+                if (notificationId) {
+                    markNotificationRead(notificationId);
+                } else {
+                    notification.style.opacity = '0';
+                    setTimeout(() => notification.remove(), 300);
+                }
+            }, 3000);
         });
     });
     </script>
