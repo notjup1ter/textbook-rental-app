@@ -83,6 +83,8 @@
             </div>
             
             <div class="book-actions" style="display: flex; flex-direction: column; gap: 0.5rem;">
+                <a href="{% url 'book_detail' book.id %}" class="btn btn-outline" style="width: 100%;">View Book</a>
+                
                 {% if book in user_library_books %}
                     <span class="in-library">✓ In Your Library</span>
                 {% else %}

@@ -12,17 +12,27 @@ class Book(models.Model):
         ('poor', 'Poor')
     )
     
+    # Add ISBN as primary identifier
+    isbn = models.CharField(max_length=13, unique=True, help_text="13-digit ISBN")
     
     title = models.CharField(max_length=200)
     author = models.CharField(max_length=100)
+    description = models.TextField(blank=True, help_text="Book description")
     cover_image = models.ImageField(upload_to='book_covers/', blank=True, null=True)
     pdf_file = models.FileField(upload_to='book_pdfs/', blank=True, null=True)
     rental_price = models.DecimalField(max_digits=6, decimal_places=2, default=9.99)
     rental_duration_days = models.IntegerField(default=30)
     condition = models.CharField(max_length=10, choices=CONDITION_CHOICES, default='good')
+    
+    @property
+    def average_rating(self):
+        ratings = self.bookrating_set.all()
+        if not ratings:
+            return 0
+        return sum(r.rating for r in ratings) / len(ratings)
 
     def __str__(self):
-        return self.title
+        return f"{self.title} (ISBN: {self.isbn})"
 
 class UserLibrary(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
@@ -107,3 +117,25 @@ class Notification(models.Model):
 
     def __str__(self):
         return f"{self.user.username} - {self.message}"
+
+class BookRating(models.Model):
+    RATING_CHOICES = (
+        (1, '1 - Poor'),
+        (2, '2 - Fair'),
+        (3, '3 - Good'),
+        (4, '4 - Very Good'),
+        (5, '5 - Excellent')
+    )
+    
+    book = models.ForeignKey(Book, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    rating = models.IntegerField(choices=RATING_CHOICES)
+    comment = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ('book', 'user')  # One rating per user per book
+
+    def __str__(self):
+        return f"{self.user.username}'s rating for {self.book.title}"

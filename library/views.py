@@ -1,9 +1,9 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.models import Group, User
-from .models import Book, UserLibrary, Profile, ApprovedLibrarianEmail, Collection, Rental, Notification
+from .models import Book, UserLibrary, Profile, ApprovedLibrarianEmail, Collection, Rental, Notification, BookRating
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import logout, login
-from .forms import CustomUserCreationForm, ProfileForm, CollectionForm, BookForm, RentalPaymentForm
+from .forms import CustomUserCreationForm, ProfileForm, CollectionForm, BookForm, RentalPaymentForm, BookRatingForm
 from django.http import FileResponse, Http404
 from django.utils import timezone
 from datetime import timedelta
@@ -12,6 +12,7 @@ from django.contrib import messages
 from django.db.models import Q
 from django.urls import reverse
 from functools import wraps
+from django.db import IntegrityError
 
 #predefined price ranges
 PRICE_RANGES = [
@@ -240,26 +241,36 @@ def librarian_dashboard(request):
         else:
             title = request.POST.get('title')
             author = request.POST.get('author')
+            isbn = request.POST.get('isbn')
+            description = request.POST.get('description')
             rental_price = request.POST.get('rental_price')
             rental_duration_days = request.POST.get('rental_duration_days')
             condition = request.POST.get('condition')
             cover_image = request.FILES.get('cover_image')
             pdf_file = request.FILES.get('pdf_file')
             
-            if title and author:
-                book = Book(
-                    title=title,
-                    author=author,
-                    rental_price=rental_price,
-                    rental_duration_days=rental_duration_days,
-                    condition=condition
-                )
-                if cover_image:
-                    book.cover_image = cover_image
-                if pdf_file:
-                    book.pdf_file = pdf_file
-                book.save()
-                return redirect('librarian_dashboard')
+            if title and author and isbn:
+                try:
+                    book = Book(
+                        title=title,
+                        author=author,
+                        isbn=isbn,
+                        description=description,
+                        rental_price=rental_price,
+                        rental_duration_days=rental_duration_days,
+                        condition=condition
+                    )
+                    if cover_image:
+                        book.cover_image = cover_image
+                    if pdf_file:
+                        book.pdf_file = pdf_file
+                    book.save()
+                    messages.success(request, f"Book '{title}' added successfully.")
+                    return redirect('librarian_dashboard')
+                except IntegrityError:
+                    messages.error(request, "A book with this ISBN already exists.")
+            else:
+                messages.error(request, "Title, author, and ISBN are required.")
 
     return render(request, 'library/librarian_dashboard.html', {'books': books})
 
@@ -359,21 +370,45 @@ def view_pdf(request, book_id):
     else:
         raise Http404("No PDF file found for this book")
 
-@login_required
 def book_detail(request, book_id):
     book = get_object_or_404(Book, id=book_id)
     user_library_books = []
     user_collections = []
+    user_rating = None
+    rating_form = None
     
     if request.user.is_authenticated:
         user_library, created = UserLibrary.objects.get_or_create(user=request.user)
         user_library_books = user_library.books.all()
         user_collections = Collection.objects.filter(user=request.user)
+        user_rating = BookRating.objects.filter(book=book, user=request.user).first()
+        
+        if request.method == 'POST':
+            if user_rating:
+                rating_form = BookRatingForm(request.POST, instance=user_rating)
+            else:
+                rating_form = BookRatingForm(request.POST)
+            
+            if rating_form.is_valid():
+                rating = rating_form.save(commit=False)
+                rating.book = book
+                rating.user = request.user
+                rating.save()
+                messages.success(request, "Your rating has been saved.")
+                return redirect('book_detail', book_id=book_id)
+        else:
+            rating_form = BookRatingForm(instance=user_rating)
+    
+    # Get all ratings for the book
+    ratings = book.bookrating_set.all().order_by('-created_at')
     
     return render(request, 'library/book_detail.html', {
         'book': book,
         'user_library_books': user_library_books,
         'user_collections': user_collections,
+        'rating_form': rating_form,
+        'user_rating': user_rating,
+        'ratings': ratings,
     })
 
 @login_required

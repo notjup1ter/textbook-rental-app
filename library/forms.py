@@ -1,7 +1,7 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
-from .models import Profile, Collection, Book
+from .models import Profile, Collection, Book, BookRating
 
 class CustomUserCreationForm(UserCreationForm):
     email = forms.EmailField(required=True)
@@ -26,7 +26,10 @@ class CollectionForm(forms.ModelForm):
 class BookForm(forms.ModelForm):
     class Meta:
         model = Book
-        fields = ['title', 'author', 'cover_image', 'pdf_file', 'rental_price', 'rental_duration_days', 'condition']
+        fields = ['title', 'author', 'isbn', 'description', 'cover_image', 'pdf_file', 'rental_price', 'rental_duration_days', 'condition']
+        widgets = {
+            'description': forms.Textarea(attrs={'rows': 3, 'class': 'form-control'}),
+        }
 
 
 class RentalPaymentForm(forms.Form):
@@ -46,3 +49,12 @@ class RentalPaymentForm(forms.Form):
         if not cvv.isdigit():
             raise forms.ValidationError("CVV must contain only digits")
         return cvv
+
+class BookRatingForm(forms.ModelForm):
+    class Meta:
+        model = BookRating
+        fields = ['rating', 'comment']
+        widgets = {
+            'rating': forms.Select(attrs={'class': 'form-control'}),
+            'comment': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+        }
