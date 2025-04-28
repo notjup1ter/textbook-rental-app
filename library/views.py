@@ -11,6 +11,7 @@ from decimal import Decimal
 from django.contrib import messages
 from django.db.models import Q
 from django.urls import reverse
+from functools import wraps
 
 #predefined price ranges
 PRICE_RANGES = [
@@ -20,6 +21,15 @@ PRICE_RANGES = [
     ('over_100', 'Over $100'),
 ]
 
+def prevent_admin_access(view_func):
+    @wraps(view_func)
+    def _wrapped_view(request, *args, **kwargs):
+        if request.user.is_authenticated and (request.user.is_superuser or request.user.is_staff):
+            return render(request, 'library/admin_blocked.html')
+        return view_func(request, *args, **kwargs)
+    return _wrapped_view
+
+@prevent_admin_access
 def home(request):
     if request.user.is_authenticated:
         try:
@@ -28,6 +38,7 @@ def home(request):
             pass
     return render(request, 'library/home.html')
 
+@prevent_admin_access
 def explore_library(request):
     books = Book.objects.all()
     query  = request.GET.get('q')
@@ -83,7 +94,8 @@ def explore_library(request):
         'selected_price_ranges': selected_price_ranges,
     })
 
-@login_required(login_url='/library/login/')
+@login_required
+@prevent_admin_access
 def my_library(request):
     user_library, created = UserLibrary.objects.get_or_create(user=request.user)
     current_time = timezone.now()
@@ -181,7 +193,11 @@ def register(request):
         form = CustomUserCreationForm(request.POST)
         if form.is_valid():
             user = form.save()
-            # Set the default role to 'patron'
+            if user.is_superuser or user.is_staff:
+                messages.error(request, "Administrator accounts cannot be created through registration.")
+                user.delete()
+                return redirect('register')
+            
             Profile.objects.create(user=user, role='patron')
             login(request, user, backend='django.contrib.auth.backends.ModelBackend')
             return redirect('home')
@@ -191,8 +207,12 @@ def register(request):
 
 @login_required
 def assign_role(request):
+    if request.user.is_superuser or request.user.is_staff:
+        return render(request, 'library/admin_blocked.html')
+
     librarian_emails = ["bjayden36@gmail.com", "chankyu2004@gmail.com", "haolinchen203@gmail.com", "xsn5hw@virginia.edu"]
     profile, created = Profile.objects.get_or_create(user=request.user)
+    
     if request.user.email in librarian_emails:
         profile.role = 'librarian'
         profile.save()
@@ -200,11 +220,11 @@ def assign_role(request):
     else: 
         profile.role = 'patron'
         profile.save()
-
-    return redirect('my_library')
+        return redirect('my_library')
 
 
 @login_required
+@prevent_admin_access
 def librarian_dashboard(request):
     if request.user.profile.role != 'librarian':
         return redirect('home')
@@ -244,6 +264,7 @@ def librarian_dashboard(request):
     return render(request, 'library/librarian_dashboard.html', {'books': books})
 
 @login_required
+@prevent_admin_access
 def profile(request):
     profile = request.user.profile
 
@@ -258,6 +279,7 @@ def profile(request):
     return render(request, "library/profilepage.html", {'form': form, 'profile': profile})
 
 @login_required
+@prevent_admin_access
 def collections(request):
     collections = Collection.objects.all()
     user_collections = Collection.objects.filter(user=request.user)
@@ -373,6 +395,7 @@ def process_mock_payment(amount, card_number):
     return card_number[-1] in '02468'
 
 @login_required
+@prevent_admin_access
 def rent_book(request, book_id):
     book = get_object_or_404(Book, id=book_id)
     current_time = timezone.now()
@@ -435,6 +458,7 @@ def rent_book(request, book_id):
     })
 
 @login_required
+@prevent_admin_access
 def my_rentals(request):
     active_rentals = Rental.objects.filter(
         user=request.user,
@@ -470,6 +494,7 @@ def delete_collection(request, collection_id):
     return redirect('collection_detail', collection_id=collection_id)
 
 @login_required
+@prevent_admin_access
 def manage_users(request):
     # Only librarians can access this view
     if request.user.profile.role != 'librarian':
