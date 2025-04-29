@@ -288,17 +288,22 @@ def collections(request):
             Q(books__title__icontains=query)
         ).distinct()
     
-    if request.method == 'POST':
-        form = CollectionForm(request.POST, request.FILES, user=request.user)
-        if form.is_valid():
-            collection = form.save(commit=False)
-            collection.user = request.user
-            collection.save()
-            form.save_m2m()  # Save many-to-many relationships
-            messages.success(request, f"Collection '{collection.title}' created successfully.")
-            return redirect('collection_detail', collection_id=collection.id)
-    else:
-        form = CollectionForm(user=request.user)
+    # Initialize form as None for unauthenticated users
+    form = None
+    
+    # Only handle form for authenticated users
+    if request.user.is_authenticated:
+        if request.method == 'POST':
+            form = CollectionForm(request.POST, request.FILES, user=request.user)
+            if form.is_valid():
+                collection = form.save(commit=False)
+                collection.user = request.user
+                collection.save()
+                form.save_m2m()  # Save many-to-many relationships
+                messages.success(request, f"Collection '{collection.title}' created successfully.")
+                return redirect('collection_detail', collection_id=collection.id)
+        else:
+            form = CollectionForm(user=request.user)
     
     context = {
         'collections': collections,

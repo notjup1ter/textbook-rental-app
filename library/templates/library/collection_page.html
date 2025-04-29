@@ -25,7 +25,7 @@
 
 <div class="dashboard-grid {% if user.is_authenticated %}authenticated-grid{% else %}guest-grid{% endif %}">
     <!-- Create Collection Form - Only show for authenticated users -->
-    {% if user.is_authenticated %}
+    {% if user.is_authenticated and form %}
     <div class="card">
         <h2 class="card-title">Create New Collection</h2>
         <form method="post" enctype="multipart/form-data">
@@ -36,13 +36,13 @@
                 <p>Please correct the errors below:</p>
                 {% for field in form %}
                     {% if field.errors %}
-                    <div class="error-message" style="color: white; margin-top: 0.5rem; font-size: 0.9rem;">
+                    <div class="error-message" style="color: var(--danger-color); margin-top: 0.5rem; font-size: 0.9rem;">
                         {{ field.label }}: {{ field.errors|striptags }}
                     </div>
                     {% endif %}
                 {% endfor %}
                 {% if form.non_field_errors %}
-                <div class="error-message" style="color: white; margin-top: 0.5rem; font-size: 0.9rem;">
+                <div class="error-message" style="color: var(--danger-color); margin-top: 0.5rem; font-size: 0.9rem;">
                     {{ form.non_field_errors|striptags }}
                 </div>
                 {% endif %}
@@ -53,7 +53,7 @@
                 <label for="{{ form.title.id_for_label }}">Collection Title</label>
                 {{ form.title }}
                 {% if form.title.errors %}
-                <div class="error-message" style="color: white; margin-top: 0.5rem; font-size: 0.9rem;">
+                <div class="error-message" style="color: var(--danger-color); margin-top: 0.5rem; font-size: 0.9rem;">
                     {{ form.title.errors }}
                 </div>
                 {% endif %}
@@ -62,7 +62,7 @@
                 <label for="{{ form.description.id_for_label }}">Description</label>
                 {{ form.description }}
                 {% if form.description.errors %}
-                <div class="error-message" style="color: white; margin-top: 0.5rem; font-size: 0.9rem;">
+                <div class="error-message" style="color: var(--danger-color); margin-top: 0.5rem; font-size: 0.9rem;">
                     {{ form.description.errors }}
                 </div>
                 {% endif %}
@@ -71,7 +71,7 @@
                 <label for="{{ form.cover_image.id_for_label }}">Cover Image</label>
                 {{ form.cover_image }}
                 {% if form.cover_image.errors %}
-                <div class="error-message" style="color: white; margin-top: 0.5rem; font-size: 0.9rem;">
+                <div class="error-message" style="color: var(--danger-color); margin-top: 0.5rem; font-size: 0.9rem;">
                     {{ form.cover_image.errors }}
                 </div>
                 {% endif %}
@@ -89,11 +89,11 @@
                 <small style="display: block; margin-top: 0.5rem; color: var(--text-light);">Private collections can only be accessed by selected users</small>
             </div>
             
-            <div class="form-group private-collection-options">
+            <div class="form-group private-collection-options" style="display: none;">
                 <label for="{{ form.allowed_users.id_for_label }}">Allowed Users</label>
                 {{ form.allowed_users }}
                 {% if form.allowed_users.errors %}
-                <div class="error-message" style="color: white; margin-top: 0.5rem; font-size: 0.9rem;">
+                <div class="error-message" style="color: var(--danger-color); margin-top: 0.5rem; font-size: 0.9rem;">
                     {{ form.allowed_users.errors }}
                 </div>
                 {% endif %}
@@ -204,6 +204,7 @@
 
 <!-- Add this JavaScript at the bottom of the template -->
 {% block extra_js %}
+{% if user.is_authenticated and form %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const privateCheckbox = document.getElementById('{{ form.is_private.id_for_label }}');
@@ -234,5 +235,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 </script>
+{% endif %}
 {% endblock %}
 {% endblock %} 
