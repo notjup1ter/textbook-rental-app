@@ -183,7 +183,7 @@ class ViewTest(TestCase):
             content_type="application/pdf"
         )
         
-        # Use the test file in your tests
+
         response = self.client.post('/some/url/', {
             'pdf_file': test_file,
         })

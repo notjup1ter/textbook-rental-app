@@ -106,8 +106,9 @@ def explore_library(request):
 @login_required
 @prevent_admin_access
 def my_library(request):
-    user_library, created = UserLibrary.objects.get_or_create(user=request.user)
     current_time = timezone.now()
+    user_library, created = UserLibrary.objects.get_or_create(user=request.user)
+    books = user_library.books.all()
     
     if request.method == 'POST':
         book_id = request.POST.get('book_id')
@@ -116,9 +117,9 @@ def my_library(request):
                 book = get_object_or_404(Book, id=book_id)
                 # Cancel any active rentals for this book
                 Rental.objects.filter(
-                    book=book,
                     user=request.user,
-                    status='active'
+                    book=book,
+                    status__in=['pending_approval', 'active']
                 ).update(status='cancelled')
                 
                 user_library.books.remove(book)
@@ -134,63 +135,21 @@ def my_library(request):
             return redirect('my_library')
     
     # Check for rentals about to expire (less than 5 minutes remaining)
-    nearly_expired_rentals = Rental.objects.filter(
-        user=request.user,
-        status='active',
-        end_date__gt=current_time,
-        end_date__lte=current_time + timedelta(minutes=5)
-    )
-    
-    for rental in nearly_expired_rentals:
-        if not Notification.objects.filter(
-            user=request.user,
-            message__contains=f"Your rental of {rental.book.title} will expire soon",
-            created_at__gte=current_time - timedelta(minutes=5)
-        ).exists():
-            Notification.objects.create(
-                user=request.user,
-                message=f"Your rental of {rental.book.title} will expire soon!",
-                link=reverse('my_library')
-            )
-            messages.warning(request, f"Your rental of {rental.book.title} will expire soon!")
-    
-    # Check for expired rentals
-    expired_rentals = Rental.objects.filter(
-        user=request.user,
-        status='active',
-        end_date__lt=current_time
-    )
-    
-    for rental in expired_rentals:
-        rental.status = 'expired'
-        rental.save()
-        user_library.books.remove(rental.book)
-        
-        Notification.objects.create(
-            user=request.user,
-            message=f"Your rental of {rental.book.title} has expired",
-            link=reverse('explore_library')
-        )
-        messages.error(request, f"Your rental of {rental.book.title} has expired")
-    
-    # Get active rentals
-    active_rentals = Rental.objects.filter(
-        user=request.user,
-        status='active',
-        end_date__gte=current_time
-    )
-    
-    # Create a dictionary of book_id: minutes_remaining
     rental_times = {}
-    for rental in active_rentals:
-        try:
-            rental_times[rental.book.id] = rental.days_remaining()
-        except (ValueError, TypeError):
-            rental_times[rental.book.id] = 0
+    for book in books:
+        rental = Rental.objects.filter(
+            user=request.user,
+            book=book,
+            status='active',
+            end_date__gt=current_time,
+        ).first()
+        if rental:
+            time_remaining = (rental.end_date - current_time).total_seconds() / 60
+            rental_times[book.id] = int(time_remaining)
     
     return render(request, 'library/my_library.html', {
-        'books': user_library.books.all(),
-        'rental_times': rental_times
+        'books': books,
+        'rental_times': rental_times,
     })
 
 def custom_logout(request):
@@ -251,8 +210,12 @@ def librarian_dashboard(request):
     if request.method == 'POST':
         if 'delete_book' in request.POST:
             book_id = request.POST.get('book_id')
-            book = get_object_or_404(Book, id=book_id)
-            book.delete()
+            try:
+                book = get_object_or_404(Book, id=book_id)
+                book.delete()
+                messages.success(request, f"Book '{book.title}' deleted successfully.")
+            except Exception as e:
+                messages.error(request, f"Error deleting book: {str(e)}")
             return redirect('librarian_dashboard')
         else:
             title = request.POST.get('title')
@@ -274,19 +237,20 @@ def librarian_dashboard(request):
                         description=description,
                         rental_price=rental_price,
                         rental_duration_days=rental_duration_days,
-                        condition=condition,
-                        cover_image=cover_image
+                        condition=condition
                     )
+                    if cover_image:
+                        book.cover_image = cover_image
                     if pdf_file:
                         book.pdf_file = pdf_file
                     book.save()
                     messages.success(request, f"Book '{title}' added successfully.")
-                    return redirect('librarian_dashboard')
                 except IntegrityError:
                     messages.error(request, "A book with this ISBN already exists.")
+                return redirect('librarian_dashboard')
             else:
                 messages.error(request, "Title, author, and ISBN are required.")
-
+    
     return render(request, 'library/librarian_dashboard.html', {'books': books})
 
 @login_required
@@ -324,22 +288,24 @@ def collections(request):
             Q(books__title__icontains=query)
         ).distinct()
     
-    collections = collections.order_by('-id')  # Most recent first
+    if request.method == 'POST':
+        form = CollectionForm(request.POST, request.FILES, user=request.user)
+        if form.is_valid():
+            collection = form.save(commit=False)
+            collection.user = request.user
+            collection.save()
+            form.save_m2m()  # Save many-to-many relationships
+            messages.success(request, f"Collection '{collection.title}' created successfully.")
+            return redirect('collection_detail', collection_id=collection.id)
+    else:
+        form = CollectionForm(user=request.user)
     
     context = {
         'collections': collections,
-        'query': query,
+        'form': form,
+        'query': query
     }
     
-    # Only add user-specific context if user is authenticated
-    if request.user.is_authenticated:
-        user_collections = Collection.objects.filter(user=request.user)
-        form = CollectionForm(user=request.user)
-        context.update({
-            'user_collections': user_collections,
-            'form': form,
-        })
-
     return render(request, 'library/collection_page.html', context)
 
 @login_required
@@ -360,8 +326,12 @@ def add_to_collection(request, book_id):
                     messages.error(request, "This book is in a private collection and cannot be added to other collections.")
                     return redirect('explore_library')
 
-                collection.books.add(book)
-                messages.success(request, f"Book added to collection '{collection.title}'")
+                # Check if book is already in this collection
+                if collection.books.filter(id=book.id).exists():
+                    messages.warning(request, f"'{book.title}' is already in collection '{collection.title}'")
+                else:
+                    collection.books.add(book)
+                    messages.success(request, f"Book added to collection '{collection.title}'")
             except ValidationError as e:
                 messages.error(request, str(e))
         else:
@@ -383,6 +353,82 @@ def collection_detail(request, collection_id):
     # Add search functionality
     query = request.GET.get('q', '')
     
+    # Handle POST requests for access management
+    if request.method == 'POST' and request.user.is_authenticated:
+        action = request.POST.get('action')
+        
+        if action == 'request_access':
+            if not collection.access_requests.filter(id=request.user.id).exists():
+                collection.access_requests.add(request.user)
+                messages.success(request, "Access request sent successfully.")
+                # Notify collection owner
+                Notification.objects.create(
+                    user=collection.user,
+                    message=f"{request.user.username} has requested access to your collection '{collection.title}'",
+                    link=reverse('collection_detail', args=[collection.id])
+                )
+            else:
+                messages.info(request, "You have already requested access to this collection.")
+                
+        elif action in ['approve_request', 'reject_request'] and request.user.profile.role == 'librarian':
+            user_id = request.POST.get('user_id')
+            if user_id:
+                user = get_object_or_404(User, id=user_id)
+                if action == 'approve_request':
+                    collection.allowed_users.add(user)
+                    collection.access_requests.remove(user)
+                    messages.success(request, f"Access granted to {user.username}")
+                    # Notify user of approval
+                    Notification.objects.create(
+                        user=user,
+                        message=f"Your request to access the collection '{collection.title}' has been approved",
+                        link=reverse('collection_detail', args=[collection.id])
+                    )
+                else:  # reject_request
+                    collection.access_requests.remove(user)
+                    messages.success(request, f"Access request from {user.username} rejected")
+                    # Notify user of rejection
+                    Notification.objects.create(
+                        user=user,
+                        message=f"Your request to access the collection '{collection.title}' has been rejected",
+                        link=reverse('collections')
+                    )
+        elif action == 'add_user' and request.user.profile.role == 'librarian':
+            username = request.POST.get('username')
+            if username:
+                try:
+                    user = User.objects.get(username=username)
+                    if user == collection.user:
+                        messages.error(request, "Cannot add the collection owner to allowed users.")
+                    elif user in collection.allowed_users.all():
+                        messages.warning(request, f"{user.username} already has access to this collection.")
+                    else:
+                        collection.allowed_users.add(user)
+                        messages.success(request, f"Access granted to {user.username}")
+                        # Notify user of access grant
+                        Notification.objects.create(
+                            user=user,
+                            message=f"You have been granted access to the collection '{collection.title}'",
+                            link=reverse('collection_detail', args=[collection.id])
+                        )
+                except User.DoesNotExist:
+                    messages.error(request, f"User '{username}' not found.")
+        elif action == 'revoke_access' and request.user.profile.role == 'librarian':
+            user_id = request.POST.get('user_id')
+            if user_id:
+                user = get_object_or_404(User, id=user_id)
+                if user == collection.user:
+                    messages.error(request, "Cannot revoke access from the collection owner.")
+                else:
+                    collection.allowed_users.remove(user)
+                    messages.success(request, f"Access revoked from {user.username}")
+                    # Notify user of access revocation
+                    Notification.objects.create(
+                        user=user,
+                        message=f"Your access to the collection '{collection.title}' has been revoked",
+                        link=reverse('collections')
+                    )
+    
     # Determine if the user can view the collection's contents
     can_view_contents = (
         not collection.is_private or  # Public collections are visible to all
@@ -399,12 +445,10 @@ def collection_detail(request, collection_id):
         'is_owner': request.user.is_authenticated and request.user == collection.user,
         'is_librarian': request.user.is_authenticated and request.user.profile.role == 'librarian',
         'query': query,
+        'has_requested_access': request.user.is_authenticated and request.user in collection.access_requests.all()
     }
 
-    # Only add request-related context for authenticated users
-    if request.user.is_authenticated:
-        context['has_requested_access'] = request.user in collection.access_requests.all()
-
+    # Add books to context if user can view contents
     if can_view_contents:
         books = collection.books.all()
         
@@ -429,16 +473,6 @@ def collection_detail(request, collection_id):
         context.update({
             'viewable_books': viewable_books,
             'non_viewable_books': non_viewable_books,
-        })
-
-    # Add librarian management context if applicable
-    if request.user.is_authenticated and request.user.profile.role == 'librarian' and collection.is_private:
-        context.update({
-            'available_users': User.objects.filter(profile__role='patron').exclude(
-                id__in=collection.allowed_users.values_list('id', flat=True)
-            ),
-            'access_requests': collection.access_requests.all(),
-            'current_allowed_users': collection.allowed_users.all()
         })
 
     return render(request, 'library/collection_detail.html', context)
@@ -488,46 +522,66 @@ def view_pdf(request, book_id):
     else:
         raise Http404("No PDF file found for this book")
 
+@prevent_admin_access
 def book_detail(request, book_id):
     book = get_object_or_404(Book, id=book_id)
-    user_library_books = []
+    user_library = None
     user_collections = []
     user_rating = None
-    rating_form = None
+    ratings = BookRating.objects.filter(book=book).select_related('user')
     
     if request.user.is_authenticated:
         user_library, created = UserLibrary.objects.get_or_create(user=request.user)
-        user_library_books = user_library.books.all()
         user_collections = Collection.objects.filter(user=request.user)
         user_rating = BookRating.objects.filter(book=book, user=request.user).first()
         
         if request.method == 'POST':
-            if user_rating:
-                rating_form = BookRatingForm(request.POST, instance=user_rating)
-            else:
-                rating_form = BookRatingForm(request.POST)
-            
+            rating_form = BookRatingForm(request.POST)
             if rating_form.is_valid():
-                rating = rating_form.save(commit=False)
-                rating.book = book
-                rating.user = request.user
-                rating.save()
-                messages.success(request, "Your rating has been saved.")
-                return redirect('book_detail', book_id=book_id)
+                if user_rating:
+                    # Update existing rating
+                    user_rating.rating = rating_form.cleaned_data['rating']
+                    user_rating.comment = rating_form.cleaned_data['comment']
+                    user_rating.save()
+                    messages.success(request, "Your rating has been updated.")
+                else:
+                    # Create new rating
+                    rating = rating_form.save(commit=False)
+                    rating.user = request.user
+                    rating.book = book
+                    rating.save()
+                    messages.success(request, "Your rating has been submitted.")
+                return redirect('book_detail', book_id=book.id)
         else:
-            rating_form = BookRatingForm(instance=user_rating)
-    
-    # Get all ratings for the book
-    ratings = book.bookrating_set.all().order_by('-created_at')
-    
-    return render(request, 'library/book_detail.html', {
+            initial_data = {}
+            if user_rating:
+                initial_data = {
+                    'rating': user_rating.rating,
+                    'comment': user_rating.comment
+                }
+            rating_form = BookRatingForm(initial=initial_data)
+    else:
+        rating_form = None
+
+    # Check if user has access to the book
+    has_access = False
+    if request.user.is_authenticated:
+        if request.user.profile.role == 'librarian':
+            has_access = True  # Librarians always have access
+        else:
+            has_access = book in user_library.books.all()  # Regular users need to rent
+
+    context = {
         'book': book,
-        'user_library_books': user_library_books,
+        'user_library_books': user_library.books.all() if user_library else [],
         'user_collections': user_collections,
+        'ratings': ratings,
         'rating_form': rating_form,
         'user_rating': user_rating,
-        'ratings': ratings,
-    })
+        'has_access': has_access
+    }
+    
+    return render(request, 'library/book_detail.html', context)
 
 @login_required
 def edit_book(request, book_id):
@@ -714,6 +768,7 @@ def manage_users(request):
     users = User.objects.select_related('profile').all()
     return render(request, 'library/manage_users.html', {'users': users})
 
+@prevent_admin_access
 @login_required
 def approve_rentals(request):
     if request.user.profile.role != 'librarian':

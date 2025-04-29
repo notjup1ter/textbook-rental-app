@@ -97,11 +97,63 @@
 
     {% if user.is_authenticated and not user_rating %}
     <div class="rating-form" style="background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); padding: 2rem; margin-top: 2rem;">
-        <h2 style="margin-bottom: 1.5rem;">Add Your Rating</h2>
-        <form method="post">
+        <h2 style="margin-bottom: 1rem;">Write a Review</h2>
+        <p style="color: var(--text-light); margin-bottom: 1.5rem;">Share your thoughts about this book with other readers.</p>
+        
+        <form method="post" style="max-width: 600px;">
             {% csrf_token %}
-            {{ rating_form.as_p }}
-            <button type="submit" class="btn btn-primary" style="margin-top: 1rem;">Submit Rating</button>
+            <div class="form-group" style="margin-bottom: 1.5rem;">
+                <label for="{{ rating_form.rating.id_for_label }}" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Rating</label>
+                {{ rating_form.rating }}
+                {% if rating_form.rating.errors %}
+                <div class="error-message" style="color: var(--danger-color); margin-top: 0.5rem; font-size: 0.9rem;">
+                    {{ rating_form.rating.errors }}
+                </div>
+                {% endif %}
+            </div>
+            
+            <div class="form-group" style="margin-bottom: 1.5rem;">
+                <label for="{{ rating_form.comment.id_for_label }}" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Your Review</label>
+                {{ rating_form.comment }}
+                {% if rating_form.comment.errors %}
+                <div class="error-message" style="color: var(--danger-color); margin-top: 0.5rem; font-size: 0.9rem;">
+                    {{ rating_form.comment.errors }}
+                </div>
+                {% endif %}
+                <small style="display: block; margin-top: 0.5rem; color: var(--text-light);">Write your honest opinion about the book. What did you like or dislike?</small>
+            </div>
+            
+            <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.75rem;">Submit Review</button>
+        </form>
+    </div>
+    {% elif user.is_authenticated and user_rating %}
+    <div class="rating-form" style="background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); padding: 2rem; margin-top: 2rem;">
+        <h2 style="margin-bottom: 1rem;">Your Review</h2>
+        <p style="color: var(--text-light); margin-bottom: 1.5rem;">You've already reviewed this book. You can update your review using the form below.</p>
+        
+        <form method="post" style="max-width: 600px;">
+            {% csrf_token %}
+            <div class="form-group" style="margin-bottom: 1.5rem;">
+                <label for="{{ rating_form.rating.id_for_label }}" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Update Rating</label>
+                {{ rating_form.rating }}
+                {% if rating_form.rating.errors %}
+                <div class="error-message" style="color: var(--danger-color); margin-top: 0.5rem; font-size: 0.9rem;">
+                    {{ rating_form.rating.errors }}
+                </div>
+                {% endif %}
+            </div>
+            
+            <div class="form-group" style="margin-bottom: 1.5rem;">
+                <label for="{{ rating_form.comment.id_for_label }}" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Update Your Review</label>
+                {{ rating_form.comment }}
+                {% if rating_form.comment.errors %}
+                <div class="error-message" style="color: var(--danger-color); margin-top: 0.5rem; font-size: 0.9rem;">
+                    {{ rating_form.comment.errors }}
+                </div>
+                {% endif %}
+            </div>
+            
+            <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.75rem;">Update Review</button>
         </form>
     </div>
     {% endif %}
