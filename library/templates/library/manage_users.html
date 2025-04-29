@@ -41,12 +41,11 @@
                         {{ user.email|default:"No email" }}
                     </td>
                     <td style="padding: 1rem; border-bottom: 1px solid #333;">
-                        <div class="role-badge" style="
+                        <div class="role-badge {% if user.profile.role == 'librarian' %}librarian-badge{% else %}patron-badge{% endif %}" style="
                             display: inline-block;
                             padding: 0.25rem 0.75rem;
                             border-radius: 20px;
                             font-size: 0.9rem;
-                            background-color: {% if user.profile.role == 'librarian' %}#4a6fa5{% else %}#f8b400{% endif %};
                             color: #ffffff;">
                             {{ user.profile.get_role_display }}
                         </div>
@@ -89,4 +88,13 @@
         {% endif %}
     </div>
 </div>
+
+<style>
+    .librarian-badge {
+        background-color: #4a6fa5;
+    }
+    .patron-badge {
+        background-color: #f8b400;
+    }
+</style>
 {% endblock %} 
