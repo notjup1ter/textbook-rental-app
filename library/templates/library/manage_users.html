@@ -6,6 +6,21 @@
 <h1>Manage Users</h1>
 
 <div class="card">
+    <form method="get" class="search-form" style="margin-bottom: 2rem;">
+        <div style="display: flex; gap: 1rem;">
+            <input type="text" 
+                   name="q" 
+                   class="form-control" 
+                   placeholder="Search by username..." 
+                   value="{{ search_query }}"
+                   style="flex: 1;">
+            <button type="submit" class="btn btn-primary" style="min-width: 100px;">Search</button>
+            {% if search_query %}
+            <a href="{% url 'manage_users' %}" class="btn btn-outline" style="min-width: 100px;">Clear</a>
+            {% endif %}
+        </div>
+    </form>
+
     <div class="table-responsive">
         <table style="width: 100%; border-collapse: collapse;">
             <thead>
@@ -63,6 +78,15 @@
                 {% endfor %}
             </tbody>
         </table>
+        {% if not users %}
+        <div class="empty-state" style="text-align: center; padding: 2rem;">
+            {% if search_query %}
+            <p>No users found matching "{{ search_query }}"</p>
+            {% else %}
+            <p>No users found</p>
+            {% endif %}
+        </div>
+        {% endif %}
     </div>
 </div>
 {% endblock %} 

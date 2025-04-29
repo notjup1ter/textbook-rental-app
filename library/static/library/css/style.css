@@ -928,15 +928,26 @@ input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focu
 
 /* Rental Status */
 .rental-status {
-    margin-top: 0.5rem;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    display: inline-block;
 }
 
-.rental-warning {
-    color: var(--danger-color);
+.rental-status.pending {
+    background-color: #fff3e0;
+    color: #f57c00;
 }
 
-.rental-normal {
-    color: var(--success-color);
+.rental-status.active {
+    background-color: #e3fcef;
+    color: #0e9f6e;
+}
+
+.status-expired {
+    background-color: #fee2e2;
+    color: #dc2626;
 }
 
 /* Book List */
@@ -1266,11 +1277,11 @@ input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focu
 }
 
 .rental-status {
-    display: inline-block;
     padding: 0.25rem 0.75rem;
     border-radius: 20px;
-    font-size: 0.8rem;
+    font-size: 0.9rem;
     font-weight: 500;
+    display: inline-block;
 }
 
 .rental-status.pending {
@@ -1283,17 +1294,17 @@ input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focu
     color: #0e9f6e;
 }
 
-.rental-status.expired {
+.status-expired {
     background-color: #fee2e2;
     color: #dc2626;
 }
 
-.rental-status.cancelled {
+.status-cancelled {
     background-color: #f3f4f6;
     color: #6b7280;
 }
 
-.rental-status.rejected {
+.status-rejected {
     background-color: #fee2e2;
     color: #dc2626;
 }
@@ -1353,11 +1364,7 @@ input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focu
     font-size: 0.9rem;
 }
 
-.status-expired {
-    background-color: #dc3545;
-}
-
-.status-cancelled {
-    background-color: #6c757d;
+.rental-time {
+    font-weight: 500;
 }
 

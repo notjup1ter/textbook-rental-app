@@ -726,7 +726,13 @@ def manage_users(request):
         messages.error(request, "You don't have permission to access this page.")
         return redirect('home')
     
-    users = User.objects.all()
+    # Get search query
+    search_query = request.GET.get('q', '')
+    users = User.objects.select_related('profile').all()
+    
+    # Filter users if search query exists
+    if search_query:
+        users = users.filter(username__icontains=search_query)
     
     if request.method == 'POST':
         user_id = request.POST.get('user_id')
@@ -764,9 +770,10 @@ def manage_users(request):
             except Exception as e:
                 messages.error(request, f"Error updating role: {str(e)}")
     
-    # Ensure we get fresh data after any updates
-    users = User.objects.select_related('profile').all()
-    return render(request, 'library/manage_users.html', {'users': users})
+    return render(request, 'library/manage_users.html', {
+        'users': users,
+        'search_query': search_query
+    })
 
 @prevent_admin_access
 @login_required

@@ -59,7 +59,7 @@
                                 </span>
                             </div>
                             <div class="rental-details" style="margin-top: 1rem;">
-                                <p style="color: {% if rental.days_remaining < 5 %}var(--danger-color){% else %}var(--text-light){% endif %}; font-weight: 500;">
+                                <p class="rental-time {% if rental.days_remaining < 5 %}rental-warning{% else %}rental-normal{% endif %}">
                                     {% if rental.days_remaining == 0 %}
                                         Expires now
                                     {% else %}
@@ -94,21 +94,7 @@
                                     <h3 style="font-size: 1.2rem; margin-bottom: 0.5rem;">{{ rental.book.title }}</h3>
                                     <p style="color: var(--text-light); margin-bottom: 0.5rem;">by {{ rental.book.author }}</p>
                                 </div>
-                                <span class="rental-status {{ rental.status }}" style="
-                                    padding: 0.25rem 0.75rem;
-                                    border-radius: 20px;
-                                    font-size: 0.9rem;
-                                    {% if rental.status == 'expired' %}
-                                        background-color: #fee2e2;
-                                        color: #dc2626;
-                                    {% elif rental.status == 'cancelled' %}
-                                        background-color: #f3f4f6;
-                                        color: #6b7280;
-                                    {% elif rental.status == 'rejected' %}
-                                        background-color: #fee2e2;
-                                        color: #dc2626;
-                                    {% endif %}
-                                ">
+                                <span class="rental-status {% if rental.status == 'expired' %}status-expired{% elif rental.status == 'cancelled' %}status-cancelled{% elif rental.status == 'rejected' %}status-rejected{% endif %}">
                                     {{ rental.get_status_display }}
                                 </span>
                             </div>
