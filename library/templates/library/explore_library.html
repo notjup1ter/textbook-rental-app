@@ -72,8 +72,11 @@
             
             <div class="book-actions" style="display: flex; flex-direction: column; gap: 0.5rem;">
                 <a href="{% url 'book_detail' book.id %}" class="btn btn-outline" style="width: 100%;">View Book</a>
-                
-                {% if book in user_library_books %}
+                {% if user.profile.role == 'librarian' %}
+                    <span class="in-library" style="background: var(--success-color); color: white; padding: 0.5rem 1rem; border-radius: 25px; display: inline-flex; align-items: center; gap: 0.5rem;">
+                        <span style="font-size: 1.2rem;">✓</span> Full Access (Librarian)
+                    </span>
+                {% elif book in user_library_books %}
                     <span class="in-library">✓ In Your Library</span>
                 {% else %}
                     <p class="rental-price" style="margin: 0;">${{ book.rental_price }} for {{ book.rental_duration_days }} minutes</p>

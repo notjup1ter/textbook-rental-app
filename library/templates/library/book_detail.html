@@ -22,7 +22,9 @@
                     <span class="condition-badge {{ book.condition }}" style="font-size: 1rem;">
                         {{ book.get_condition_display }}
                     </span>
+                    {% if not user.profile.role == 'librarian' %}
                     <span class="rental-price" style="font-size: 1rem; background: var(--primary-color); color: white; padding: 0.25rem 0.75rem; border-radius: 20px;">${{ book.rental_price }} for {{ book.rental_duration_days }} minutes</span>
+                    {% endif %}
                 </div>
                 {% if book.description %}
                 <div class="book-description" style="margin-bottom: 1.5rem;">
@@ -32,7 +34,11 @@
                 {% endif %}
             </div>
             <div class="book-actions" style="display: flex; gap: 1rem; flex-wrap: wrap;">
-                {% if book in user_library_books %}
+                {% if user.profile.role == 'librarian' %}
+                    <span class="in-library" style="background: var(--success-color); color: white; padding: 0.5rem 1rem; border-radius: 25px; display: inline-flex; align-items: center; gap: 0.5rem;">
+                        <span style="font-size: 1.2rem;">✓</span> Full Access (Librarian)
+                    </span>
+                {% elif book in user_library_books %}
                     <span class="in-library" style="background: var(--success-color); color: white; padding: 0.5rem 1rem; border-radius: 25px; display: inline-flex; align-items: center; gap: 0.5rem;">
                         <span style="font-size: 1.2rem;">✓</span> In Your Library
                     </span>
@@ -58,7 +64,7 @@
         </div>
     </div>
 
-    {% if book.pdf_file and book in user_library_books %}
+    {% if book.pdf_file and has_access %}
     <div class="pdf-viewer" style="background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); padding: 2rem; margin-bottom: 2rem;">
         <h2 style="margin-bottom: 1rem;">Book Preview</h2>
         <div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden;">
